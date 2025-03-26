@@ -13,11 +13,9 @@ type User struct {
 	Email     string         `json:"email" gorm:"unique;not null"`
 	Password  string         `json:"-" gorm:"not null"` // Password is not exposed in JSON responses
 	Name      string         `json:"name" gorm:"not null"`
-	Role      string         `json:"role" gorm:"not null;default:developer"` // 'admin' or 'developer'
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
-	Projects  []Project      `json:"projects,omitempty" gorm:"many2many:project_users;"`
 }
 
 // BeforeCreate will set a UUID rather than numeric ID.

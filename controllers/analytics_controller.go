@@ -77,13 +77,10 @@ func (ac *AnalyticsController) GetMetrics(c *gin.Context) {
 			return
 		}
 
-		role, _ := c.Get("user_role")
-		if role != "admin" && project.OwnerID != userID.(uuid.UUID) {
-			var projectUser models.ProjectUser
-			if err := ac.DB.Where("project_id = ? AND user_id = ?", projectID, userID).First(&projectUser).Error; err != nil {
-				c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-				return
-			}
+		// Only the owner has access
+		if project.OwnerID != userID.(uuid.UUID) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
 		}
 	}
 
@@ -185,13 +182,10 @@ func (ac *AnalyticsController) GetEvents(c *gin.Context) {
 			return
 		}
 
-		role, _ := c.Get("user_role")
-		if role != "admin" && project.OwnerID != userID.(uuid.UUID) {
-			var projectUser models.ProjectUser
-			if err := ac.DB.Where("project_id = ? AND user_id = ?", projectID, userID).First(&projectUser).Error; err != nil {
-				c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-				return
-			}
+		// Only the owner has access
+		if project.OwnerID != userID.(uuid.UUID) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
 		}
 	}
 
@@ -303,13 +297,10 @@ func (ac *AnalyticsController) GetDevices(c *gin.Context) {
 			return
 		}
 
-		role, _ := c.Get("user_role")
-		if role != "admin" && project.OwnerID != userID.(uuid.UUID) {
-			var projectUser models.ProjectUser
-			if err := ac.DB.Where("project_id = ? AND user_id = ?", projectID, userID).First(&projectUser).Error; err != nil {
-				c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-				return
-			}
+		// Only the owner has access
+		if project.OwnerID != userID.(uuid.UUID) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
 		}
 	}
 

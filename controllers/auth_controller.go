@@ -33,7 +33,6 @@ type LoginResponse struct {
 		ID    uuid.UUID `json:"id"`
 		Email string    `json:"email"`
 		Name  string    `json:"name"`
-		Role  string    `json:"role"`
 	} `json:"user"`
 }
 
@@ -98,7 +97,6 @@ func (ac *AuthController) Login(c *gin.Context) {
 	response.User.ID = user.ID
 	response.User.Email = user.Email
 	response.User.Name = user.Name
-	response.User.Role = user.Role
 
 	c.JSON(http.StatusOK, response)
 }
@@ -192,16 +190,12 @@ func (ac *AuthController) Register(c *gin.Context) {
 		Email:    registerReq.Email,
 		Password: hashedPassword,
 		Name:     registerReq.Name,
-		Role:     "developer", // Default role
 	}
 
 	if err := ac.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
-
-	// Hide password in response
-	user.Password = ""
 
 	c.JSON(http.StatusCreated, user)
 }
@@ -233,7 +227,6 @@ func createToken(user models.User) (string, time.Time, error) {
 	claims := middleware.JWTClaims{
 		UserID: user.ID,
 		Email:  user.Email,
-		Role:   user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

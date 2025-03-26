@@ -14,13 +14,6 @@ type ProjectController struct {
 	DB *gorm.DB
 }
 
-// ProjectUser represents the join table between projects and users
-type ProjectUser struct {
-	ProjectID uuid.UUID `gorm:"type:uuid;primary_key"`
-	UserID    uuid.UUID `gorm:"type:uuid;primary_key"`
-	Role      string    `gorm:"not null;default:contributor"` // contributor or admin
-}
-
 // NewProjectController creates a new ProjectController instance
 func NewProjectController(db *gorm.DB) *ProjectController {
 	return &ProjectController{DB: db}
@@ -48,24 +41,12 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 		return
 	}
 
-	role, _ := c.Get("user_role")
-
 	var projects []models.Project
 
-	// Admin can see all projects, developer only sees their own
-	if role == "admin" {
-		if err := pc.DB.Find(&projects).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve projects"})
-			return
-		}
-	} else {
-		if err := pc.DB.Joins("JOIN project_users ON project_users.project_id = projects.id").
-			Where("project_users.user_id = ? OR projects.owner_id = ?", userID, userID).
-			Group("projects.id").
-			Find(&projects).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve projects"})
-			return
-		}
+	// Users can only see their own projects
+	if err := pc.DB.Where("owner_id = ?", userID).Find(&projects).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve projects"})
+		return
 	}
 
 	c.JSON(http.StatusOK, projects)
@@ -90,7 +71,6 @@ func (pc *ProjectController) GetProject(c *gin.Context) {
 		return
 	}
 
-	role, _ := c.Get("user_role")
 	id := c.Param("id")
 
 	projectID, err := uuid.Parse(id)
@@ -107,13 +87,10 @@ func (pc *ProjectController) GetProject(c *gin.Context) {
 		return
 	}
 
-	// Check if user has access to project
-	if role != "admin" && project.OwnerID != userID.(uuid.UUID) {
-		var projectUser models.ProjectUser
-		if err := pc.DB.Where("project_id = ? AND user_id = ?", projectID, userID).First(&projectUser).Error; err != nil {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-			return
-		}
+	// Check if user has access to project (only owner has access)
+	if project.OwnerID != userID.(uuid.UUID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		return
 	}
 
 	c.JSON(http.StatusOK, project)
@@ -180,7 +157,6 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 		return
 	}
 
-	role, _ := c.Get("user_role")
 	id := c.Param("id")
 
 	projectID, err := uuid.Parse(id)
@@ -197,20 +173,21 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 		return
 	}
 
-	// Check if user has access to project
-	if role != "admin" && project.OwnerID != userID.(uuid.UUID) {
+	// Check if user has access to project (only owner has access)
+	if project.OwnerID != userID.(uuid.UUID) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 		return
 	}
 
+	// Update project
 	var updateReq CreateProjectRequest
 	if err := c.ShouldBindJSON(&updateReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	// Update project
 	project.Name = updateReq.Name
+
 	if err := pc.DB.Save(&project).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update project"})
 		return
@@ -228,7 +205,6 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 // @Param id path string true "Project ID"
 // @Security BearerAuth
 // @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
 // @Failure 404 {object} map[string]string
@@ -240,7 +216,6 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 		return
 	}
 
-	role, _ := c.Get("user_role")
 	id := c.Param("id")
 
 	projectID, err := uuid.Parse(id)
@@ -257,8 +232,8 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 		return
 	}
 
-	// Check if user has access to project
-	if role != "admin" && project.OwnerID != userID.(uuid.UUID) {
+	// Check if user has access to project (only owner has access)
+	if project.OwnerID != userID.(uuid.UUID) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 		return
 	}
@@ -293,7 +268,6 @@ func (pc *ProjectController) GetAPIKey(c *gin.Context) {
 		return
 	}
 
-	role, _ := c.Get("user_role")
 	id := c.Param("id")
 
 	projectID, err := uuid.Parse(id)
@@ -310,13 +284,10 @@ func (pc *ProjectController) GetAPIKey(c *gin.Context) {
 		return
 	}
 
-	// Check if user has access to project
-	if role != "admin" && project.OwnerID != userID.(uuid.UUID) {
-		var projectUser models.ProjectUser
-		if err := pc.DB.Where("project_id = ? AND user_id = ?", projectID, userID).First(&projectUser).Error; err != nil {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-			return
-		}
+	// Check if user has access to project (only owner has access)
+	if project.OwnerID != userID.(uuid.UUID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"api_key": project.ApiKey})
@@ -343,7 +314,6 @@ func (pc *ProjectController) RegenerateAPIKey(c *gin.Context) {
 		return
 	}
 
-	role, _ := c.Get("user_role")
 	id := c.Param("id")
 
 	projectID, err := uuid.Parse(id)
@@ -360,8 +330,8 @@ func (pc *ProjectController) RegenerateAPIKey(c *gin.Context) {
 		return
 	}
 
-	// Check if user has access to project
-	if role != "admin" && project.OwnerID != userID.(uuid.UUID) {
+	// Check if user has access to project (only owner has access)
+	if project.OwnerID != userID.(uuid.UUID) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 		return
 	}

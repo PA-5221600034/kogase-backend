@@ -168,13 +168,6 @@ func (s *Server) setupRoutes() {
 			analytics.GET("/devices", analyticsController.GetDevices)
 		}
 	}
-
-	// Admin routes (admin role required)
-	admin := v1.Group("/admin")
-	admin.Use(middleware.AuthMiddleware(s.DB), middleware.AdminMiddleware())
-	{
-		// TODO: Add admin routes as needed
-	}
 }
 
 // Run starts the server
