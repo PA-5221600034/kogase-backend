@@ -109,10 +109,10 @@ func (s *Server) setupRoutes() {
 
 	// Create controllers
 	authController := controllers.NewAuthController(s.DB)
-	userController := controllers.NewUserController(s.DB)
+	deviceController := controllers.NewDeviceController(s.DB)
 	projectController := controllers.NewProjectController(s.DB)
 	telemetryController := controllers.NewTelemetryController(s.DB)
-	analyticsController := controllers.NewAnalyticsController(s.DB)
+	userController := controllers.NewUserController(s.DB)
 
 	// API v1 routes
 	v1 := s.Router.Group("/api/v1")
@@ -121,37 +121,53 @@ func (s *Server) setupRoutes() {
 	auth := v1.Group("/auth")
 	{
 		auth.POST("/login", authController.Login)
-		auth.GET("/me", middleware.AuthMiddleware(s.DB), authController.Me)
 		auth.POST("/logout", middleware.AuthMiddleware(s.DB), authController.Logout)
+		auth.GET("/me", middleware.AuthMiddleware(s.DB), authController.Me)
 	}
 
-	// User Management routes (authenticated)
-	users := v1.Group("/users")
-	users.Use(middleware.AuthMiddleware(s.DB))
+	// Device routes
+	devices := v1.Group("/devices")
 	{
-		users.GET("", userController.GetUsers)
-		users.POST("", userController.CreateUser)
-		users.GET("/:id", userController.GetUser)
-		users.PATCH("/:id", userController.UpdateUser)
-		users.DELETE("/:id", userController.DeleteUser)
+		// API key routes (for game clients)
+		apiKeyDevices := devices.Group("")
+		apiKeyDevices.Use(middleware.ApiKeyMiddleware(s.DB))
+		{
+			apiKeyDevices.POST("", deviceController.CreateDevice)
+			apiKeyDevices.GET("/:id", deviceController.GetDevice)
+			apiKeyDevices.PATCH("/:id", deviceController.UpdateDevice)
+		}
+
+		// Auth routes (for dashboard)
+		authDevices := devices.Group("")
+		authDevices.Use(middleware.AuthMiddleware(s.DB))
+		{
+			authDevices.GET("", deviceController.GetDevices)
+			authDevices.DELETE("/:id", deviceController.DeleteDevice)
+		}
 	}
 
-	// Project Management routes (authenticated)
+	// Project routes
 	projects := v1.Group("/projects")
-	projects.Use(middleware.AuthMiddleware(s.DB))
 	{
-		projects.GET("", projectController.GetProjects)
-		projects.POST("", projectController.CreateProject)
-		projects.GET("/:id", projectController.GetProject)
-		projects.PATCH("/:id", projectController.UpdateProject)
-		projects.DELETE("/:id", projectController.DeleteProject)
-		projects.GET("/:id/apikey", projectController.GetAPIKey)
-		projects.POST("/:id/apikey", projectController.RegenerateAPIKey)
+		// API key routes (for game clients)
+		projects.GET("/apikey", middleware.ApiKeyMiddleware(s.DB), projectController.GetProjectByApiKey)
+
+		// Auth routes (for dashboard)
+		authProjects := projects.Group("")
+		authProjects.Use(middleware.AuthMiddleware(s.DB))
+		{
+			authProjects.POST("", projectController.CreateProject)
+			authProjects.GET("/:id", projectController.GetProject)
+			authProjects.GET("", projectController.GetProjects)
+			authProjects.PATCH("/:id", projectController.UpdateProject)
+			authProjects.DELETE("/:id", projectController.DeleteProject)
+			authProjects.POST("/:id/apikey", projectController.RegenerateApiKey)
+		}
 	}
 
 	// Telemetry Collection routes (API key required)
 	telemetry := v1.Group("/telemetry")
-	telemetry.Use(middleware.APIKeyMiddleware(s.DB))
+	telemetry.Use(middleware.ApiKeyMiddleware(s.DB))
 	{
 		// Events
 		telemetry.POST("/events", telemetryController.RecordEvent)
@@ -161,20 +177,18 @@ func (s *Server) setupRoutes() {
 		telemetry.POST("/session/start", telemetryController.StartSession)
 		telemetry.POST("/session/end", telemetryController.EndSession)
 
-		// Installation
-		telemetry.POST("/install", telemetryController.RecordInstallation)
+		// Acquisition
+		telemetry.POST("/install", telemetryController.RecordInstall)
 	}
 
-	// Analytics routes (authenticated)
-	analytics := v1.Group("/analytics")
-	analytics.Use(middleware.AuthMiddleware(s.DB))
+	// User Management routes (authenticated)
+	users := v1.Group("/users")
 	{
-		analytics.GET("/metrics", analyticsController.GetMetrics)
-		analytics.GET("/events", analyticsController.GetEvents)
-		analytics.GET("/devices", analyticsController.GetDevices)
-		analytics.GET("/retention", analyticsController.GetRetention)
-		analytics.GET("/sessions", analyticsController.GetSessions)
-		analytics.GET("/active-users", analyticsController.GetActiveUsers)
+		users.POST("", userController.CreateUser)
+		users.GET("/:id", userController.GetUser)
+		users.GET("", userController.GetUsers)
+		users.PATCH("/:id", userController.UpdateUser)
+		users.DELETE("/:id", userController.DeleteUser)
 	}
 }
 

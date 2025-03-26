@@ -17,7 +17,7 @@ type AuthToken struct {
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `json:"-" gorm:"index"`
-	User       User           `json:"-" gorm:"foreignKey:UserID"`
+	User       User           `json:"-" gorm:"foreignKey:UserID;references:ID"`
 }
 
 // BeforeCreate will set a UUID rather than numeric ID

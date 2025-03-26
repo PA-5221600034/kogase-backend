@@ -14,11 +14,9 @@ import (
 type EventType string
 
 const (
-	SessionStart EventType = "session_start"
-	SessionEnd   EventType = "session_end"
-	Install      EventType = "install"
-	Uninstall    EventType = "uninstall"
-	Custom       EventType = "custom"
+	SessionStart EventType = "kogase_predefined_session_start"
+	SessionEnd   EventType = "kogase_predefined_session_end"
+	Install      EventType = "kogase_predefined_install"
 )
 
 // Parameters is a JSON object for event parameters
@@ -46,7 +44,7 @@ type Event struct {
 	ID         uuid.UUID      `json:"id" gorm:"type:uuid;primary_key"`
 	ProjectID  uuid.UUID      `json:"project_id" gorm:"type:uuid;not null"`
 	DeviceID   uuid.UUID      `json:"device_id" gorm:"type:uuid;not null"`
-	EventType  EventType      `json:"event_type" gorm:"not null;type:varchar(20)"`
+	EventType  EventType      `json:"event_type" gorm:"not null;type:varchar(50)"`
 	EventName  string         `json:"event_name" gorm:"not null"`                // For custom events
 	Parameters Parameters     `json:"parameters" gorm:"type:jsonb;default:'{}'"` // JSON parameters
 	Timestamp  time.Time      `json:"timestamp" gorm:"not null"`                 // When event occurred (client-side)
@@ -54,8 +52,8 @@ type Event struct {
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `json:"-" gorm:"index"`
-	Project    Project        `json:"-" gorm:"foreignKey:ProjectID"`
-	Device     Device         `json:"-" gorm:"foreignKey:DeviceID"`
+	Project    Project        `json:"-" gorm:"foreignKey:ProjectID;references:ID"`
+	Device     Device         `json:"-" gorm:"foreignKey:DeviceID;references:ID"`
 }
 
 // BeforeCreate will set a UUID rather than numeric ID

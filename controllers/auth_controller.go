@@ -2,15 +2,11 @@ package controllers
 
 import (
 	"net/http"
-	"os"
-	"time"
 
 	"github.com/atqamz/kogase-backend/dtos"
-	"github.com/atqamz/kogase-backend/middleware"
 	"github.com/atqamz/kogase-backend/models"
 	"github.com/atqamz/kogase-backend/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -36,6 +32,7 @@ func NewAuthController(db *gorm.DB) *AuthController {
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/auth/login [post]
 func (ac *AuthController) Login(c *gin.Context) {
+	// Bind request body
 	var loginReq dtos.LoginRequest
 	if err := c.ShouldBindJSON(&loginReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -55,8 +52,8 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// Create token
-	token, expiresAt, err := createToken(user)
+	// Create token - use new utility function instead of local helper
+	token, expiresAt, err := utils.CreateToken(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create token"})
 		return
@@ -74,12 +71,10 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}
 
 	// Create response
-	var response dtos.LoginResponse
-	response.Token = token
-	response.ExpiresAt = expiresAt
-	response.User.ID = user.ID
-	response.User.Email = user.Email
-	response.User.Name = user.Name
+	response := dtos.LoginResponse{
+		Token:     token,
+		ExpiresAt: expiresAt,
+	}
 
 	c.JSON(http.StatusOK, response)
 }
@@ -91,23 +86,35 @@ func (ac *AuthController) Login(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} models.User
+// @Success 200 {object} dtos.MeResponse
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/auth/me [get]
 func (ac *AuthController) Me(c *gin.Context) {
+	// Get user ID from context (set by AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return
 	}
 
+	// Get user
 	var user models.User
 	if err := ac.DB.First(&user, "id = ?", userID).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	// Create response using MeResponse DTO
+	response := dtos.MeResponse{
+		ID:        user.ID,
+		Email:     user.Email,
+		Name:      user.Name,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
+
+	// Return response
+	c.JSON(http.StatusOK, response)
 }
 
 // Logout invalidates the current token
@@ -117,10 +124,11 @@ func (ac *AuthController) Me(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} map[string]string
+// @Success 200 {object} dtos.LogoutResponse
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/auth/logout [post]
 func (ac *AuthController) Logout(c *gin.Context) {
+	// Get auth header
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
@@ -133,46 +141,10 @@ func (ac *AuthController) Logout(c *gin.Context) {
 	// Delete token from database
 	ac.DB.Where("token = ?", tokenString).Delete(&models.AuthToken{})
 
-	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
-}
-
-// Helper function to create a JWT token
-func createToken(user models.User) (string, time.Time, error) {
-	// Get JWT expiry from env
-	expiryStr := os.Getenv("JWT_EXPIRES_IN")
-	if expiryStr == "" {
-		expiryStr = "24h" // Default to 24 hours
+	// Create response using LogoutResponse DTO
+	response := dtos.LogoutResponse{
+		Message: "Logged out successfully",
 	}
 
-	// Parse the duration
-	expiryDuration, err := time.ParseDuration(expiryStr)
-	if err != nil {
-		expiryDuration = 24 * time.Hour // Default to 24 hours
-	}
-
-	expiresAt := time.Now().Add(expiryDuration)
-
-	// Create claims
-	claims := middleware.JWTClaims{
-		UserID: user.ID,
-		Email:  user.Email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expiresAt),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "kogase-api",
-			Subject:   user.ID.String(),
-		},
-	}
-
-	// Create token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign token
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
-	if err != nil {
-		return "", time.Time{}, err
-	}
-
-	return tokenString, expiresAt, nil
+	c.JSON(http.StatusOK, response)
 }

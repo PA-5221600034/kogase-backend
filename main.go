@@ -31,17 +31,15 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	// Create new server
 	s, err := server.New()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error initializing server: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error initializing backend: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Start server
-	log.Println("Starting Kogase server...")
+	log.Println("Starting Kogase backend...")
 	if err := s.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error running server: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error running backend: %v\n", err)
 		os.Exit(1)
 	}
 }

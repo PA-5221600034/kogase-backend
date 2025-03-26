@@ -7,7 +7,6 @@ import (
 	"github.com/atqamz/kogase-backend/models"
 	"github.com/atqamz/kogase-backend/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -19,61 +18,6 @@ type UserController struct {
 // NewUserController creates a new UserController instance
 func NewUserController(db *gorm.DB) *UserController {
 	return &UserController{DB: db}
-}
-
-// GetUsers returns all users
-// @Summary List users
-// @Description Get all users
-// @Tags users
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {array} models.User
-// @Failure 401 {object} map[string]string
-// @Router /api/v1/users [get]
-func (uc *UserController) GetUsers(c *gin.Context) {
-	// Get users
-	var users []models.User
-	if err := uc.DB.Find(&users).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve users"})
-		return
-	}
-
-	// Return users
-	c.JSON(http.StatusOK, users)
-}
-
-// GetUser returns a specific user by ID
-// @Summary Get user
-// @Description Get a specific user by ID
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param id path string true "User ID"
-// @Security BearerAuth
-// @Success 200 {object} models.User
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Router /api/v1/users/{id} [get]
-func (uc *UserController) GetUser(c *gin.Context) {
-	// Parse user ID
-	id := c.Param("id")
-	userID, err := uuid.Parse(id)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
-	}
-
-	// Get user
-	var user models.User
-	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
-
-	// Return user
-	c.JSON(http.StatusOK, user)
 }
 
 // CreateUser creates a new user
@@ -91,7 +35,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 // @Router /api/v1/users [post]
 func (uc *UserController) CreateUser(c *gin.Context) {
 	// Parse request
-	var userReq dtos.RegisterRequest
+	var userReq dtos.CreateUserRequest
 	if err := c.ShouldBindJSON(&userReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
@@ -126,6 +70,79 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, user)
 }
 
+// GetUser returns a specific user by ID
+// @Summary Get user
+// @Description Get a specific user by ID
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Security BearerAuth
+// @Success 200 {object} models.User
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/v1/users/{id} [get]
+func (uc *UserController) GetUser(c *gin.Context) {
+	// Get user ID from context (set by AuthMiddleware)
+	userID, exist := c.Get("user_id")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Get user
+	var user models.User
+	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Create response DTO
+	response := dtos.GetUserResponseDetail{
+		ID:    user.ID,
+		Email: user.Email,
+		Name:  user.Name,
+	}
+
+	// Return user
+	c.JSON(http.StatusOK, response)
+}
+
+// GetUsers returns all users
+// @Summary List users
+// @Description Get all users
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} models.User
+// @Failure 401 {object} map[string]string
+// @Router /api/v1/users [get]
+func (uc *UserController) GetUsers(c *gin.Context) {
+	// Get users
+	var users []models.User
+	if err := uc.DB.Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve users"})
+		return
+	}
+
+	// Create response DTO
+	response := dtos.GetUsersResponse{
+		Users: make([]dtos.GetUserResponse, len(users)),
+	}
+	for i, user := range users {
+		response.Users[i] = dtos.GetUserResponse{
+			ID:    user.ID,
+			Email: user.Email,
+			Name:  user.Name,
+		}
+	}
+
+	// Return response
+	c.JSON(http.StatusOK, response)
+}
+
 // UpdateUser updates a user
 // @Summary Update user
 // @Description Update user details
@@ -139,13 +156,12 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /api/v1/users/{id} [patch]
+// @Router /api/v1/users [patch]
 func (uc *UserController) UpdateUser(c *gin.Context) {
-	// Parse user ID
-	id := c.Param("id")
-	userID, err := uuid.Parse(id)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+	// Get user ID from context (set by AuthMiddleware)
+	userID, exist := c.Get("user_id")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return
 	}
 
@@ -184,8 +200,14 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Create response DTO
+	response := dtos.UpdateUserResponse{
+		Email: user.Email,
+		Name:  user.Name,
+	}
+
 	// Return user
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, response)
 }
 
 // DeleteUser deletes a user
@@ -200,13 +222,12 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /api/v1/users/{id} [delete]
+// @Router /api/v1/users [delete]
 func (uc *UserController) DeleteUser(c *gin.Context) {
-	// Parse user ID
-	id := c.Param("id")
-	userID, err := uuid.Parse(id)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+	// Get user ID from context (set by AuthMiddleware)
+	userID, exist := c.Get("user_id")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return
 	}
 
@@ -223,6 +244,11 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// Return success message
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+	// Create response DTO
+	response := dtos.DeleteUserResponse{
+		Message: "User deleted successfully",
+	}
+
+	// Return response
+	c.JSON(http.StatusOK, response)
 }

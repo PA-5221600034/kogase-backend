@@ -6,7 +6,6 @@ import (
 
 	"github.com/atqamz/kogase-backend/dtos"
 	"github.com/atqamz/kogase-backend/models"
-	"github.com/atqamz/kogase-backend/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -22,76 +21,6 @@ func NewTelemetryController(db *gorm.DB) *TelemetryController {
 	return &TelemetryController{DB: db}
 }
 
-// createOrUpdateDevice finds an existing device or creates a new one
-func (tc *TelemetryController) createOrUpdateDevice(c *gin.Context, projectID uuid.UUID, deviceID string, platform string, osVersion string, appVersion string) (models.Device, error) {
-	// Try to find the device
-	var device models.Device
-	result := tc.DB.Where("project_id = ? AND device_id = ?", projectID, deviceID).First(&device)
-
-	// Current IP address
-	ipAddress := c.ClientIP()
-
-	// Device found - update it
-	if result.Error == nil {
-		device.LastSeen = time.Now()
-
-		// Only update these if provided
-		if appVersion != "" {
-			device.AppVersion = appVersion
-		}
-
-		if osVersion != "" {
-			device.OSVersion = osVersion
-		}
-
-		// Update IP and country if they've changed
-		if device.IPAddress != ipAddress {
-			device.IPAddress = ipAddress
-
-			// Get updated country from IP address
-			country, err := utils.GetCountryFromIP(ipAddress)
-			if err == nil && country != "Unknown" {
-				device.Country = country
-			}
-		}
-
-		if err := tc.DB.Save(&device).Error; err != nil {
-			return device, err
-		}
-
-		return device, nil
-	}
-
-	// Device doesn't exist, create a new one
-	// Get country from IP address
-	country, err := utils.GetCountryFromIP(ipAddress)
-	if err != nil {
-		// If geolocation fails, continue with unknown country
-		country = "Unknown"
-	}
-
-	// Create new device
-	newDevice := models.Device{
-		ProjectID:  projectID,
-		DeviceID:   deviceID,
-		Platform:   platform,
-		OSVersion:  osVersion,
-		AppVersion: appVersion,
-		FirstSeen:  time.Now(),
-		LastSeen:   time.Now(),
-		IPAddress:  ipAddress,
-		Country:    country,
-	}
-
-	// Create new device
-	if err := tc.DB.Create(&newDevice).Error; err != nil {
-		return newDevice, err
-	}
-
-	// Return new device
-	return newDevice, nil
-}
-
 // RecordEvent records a single telemetry event
 // @Summary Record event
 // @Description Record a telemetry event
@@ -105,60 +34,60 @@ func (tc *TelemetryController) createOrUpdateDevice(c *gin.Context, projectID uu
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/telemetry/events [post]
 func (tc *TelemetryController) RecordEvent(c *gin.Context) {
-	// Get project ID from context
+	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Project not found"})
 		return
 	}
 
-	// Parse request
-	var eventReq dtos.EventRequest
-	if err := c.ShouldBindJSON(&eventReq); err != nil {
+	// Bind request body
+	var request dtos.RecordEventRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	// Create or update device
-	device, err := tc.createOrUpdateDevice(
-		c,
-		projectID.(uuid.UUID),
-		eventReq.DeviceID,
-		eventReq.Platform,
-		eventReq.OSVersion,
-		eventReq.AppVersion,
-	)
+	// Verify device exists and belongs to this project
+	var device models.Device
+	if err := tc.DB.Where("id = ? AND project_id = ?", request.DeviceID, projectID).First(&device).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Device not found or doesn't belong to this project"})
+		return
+	}
 
-	// If error, return
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create or update device"})
+	// Update device last seen
+	device.LastSeen = time.Now()
+	if err := tc.DB.Save(&device).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update device last seen"})
 		return
 	}
 
 	// Create event
 	timestamp := time.Now()
-	if eventReq.Timestamp != nil {
-		timestamp = *eventReq.Timestamp
+	if request.Timestamp != nil {
+		timestamp = *request.Timestamp
 	}
-
 	event := models.Event{
 		ProjectID:  projectID.(uuid.UUID),
-		DeviceID:   device.ID,
-		EventType:  models.EventType(eventReq.EventType),
-		EventName:  eventReq.EventName,
-		Parameters: eventReq.Parameters,
+		DeviceID:   request.DeviceID,
+		EventType:  models.EventType(request.EventType),
+		EventName:  request.EventName,
+		Parameters: request.Parameters,
 		Timestamp:  timestamp,
 		ReceivedAt: time.Now(),
 	}
-
-	// Create event
 	if err := tc.DB.Create(&event).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to record event"})
 		return
 	}
 
-	// Return success message
-	c.JSON(http.StatusCreated, gin.H{"message": "Event recorded successfully"})
+	// Create response DTO
+	response := dtos.RecordEventResponse{
+		Message: "Event recorded successfully",
+	}
+
+	// Return response
+	c.JSON(http.StatusCreated, response)
 }
 
 // RecordEvents records multiple telemetry events in a batch
@@ -174,48 +103,40 @@ func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/telemetry/events/batch [post]
 func (tc *TelemetryController) RecordEvents(c *gin.Context) {
+	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Project not found"})
 		return
 	}
 
-	var eventsReq dtos.EventsRequest
-	if err := c.ShouldBindJSON(&eventsReq); err != nil {
+	var request dtos.RecordEventsRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	// Process events in a transaction
 	err := tc.DB.Transaction(func(tx *gorm.DB) error {
-		// Create a transaction-specific controller to use the tx instance
-		txController := &TelemetryController{DB: tx}
+		// Keep track of devices to avoid multiple lookups and updates
+		devices := make(map[uuid.UUID]bool)
 
-		// Keep track of devices to avoid multiple lookups
-		devices := make(map[string]models.Device)
-
-		for _, eventReq := range eventsReq.Events {
-			// Check if we've already processed this device in this batch
-			device, exists := devices[eventReq.DeviceID]
-
-			if !exists {
-				// Find or create device using our helper
-				var err error
-				device, err = txController.createOrUpdateDevice(
-					c,
-					projectID.(uuid.UUID),
-					eventReq.DeviceID,
-					eventReq.Platform,
-					eventReq.OSVersion,
-					eventReq.AppVersion,
-				)
-
-				if err != nil {
+		for _, eventReq := range request.Events {
+			// Verify device exists and belongs to this project
+			if _, exists := devices[eventReq.DeviceID]; !exists {
+				var device models.Device
+				if err := tx.Where("id = ? AND project_id = ?", eventReq.DeviceID, projectID).First(&device).Error; err != nil {
 					return err
 				}
 
-				// Cache the device for future events in this batch
-				devices[eventReq.DeviceID] = device
+				// Update device last seen
+				device.LastSeen = time.Now()
+				if err := tx.Save(&device).Error; err != nil {
+					return err
+				}
+
+				// Mark device as verified
+				devices[eventReq.DeviceID] = true
 			}
 
 			// Create event
@@ -223,17 +144,15 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 			if eventReq.Timestamp != nil {
 				timestamp = *eventReq.Timestamp
 			}
-
 			event := models.Event{
 				ProjectID:  projectID.(uuid.UUID),
-				DeviceID:   device.ID,
+				DeviceID:   eventReq.DeviceID,
 				EventType:  models.EventType(eventReq.EventType),
 				EventName:  eventReq.EventName,
 				Parameters: eventReq.Parameters,
 				Timestamp:  timestamp,
 				ReceivedAt: time.Now(),
 			}
-
 			if err := tx.Create(&event).Error; err != nil {
 				return err
 			}
@@ -247,7 +166,14 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Events recorded successfully", "count": len(eventsReq.Events)})
+	// Create response DTO
+	response := dtos.RecordEventsResponse{
+		Message: "Events recorded successfully",
+		Count:   len(request.Events),
+	}
+
+	// Return response
+	c.JSON(http.StatusCreated, response)
 }
 
 // StartSession starts a new session for a device
@@ -263,26 +189,60 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/telemetry/session/start [post]
 func (tc *TelemetryController) StartSession(c *gin.Context) {
-	// Session start is essentially an event with type "session_start"
-	c.Request.Body = http.NoBody // Clear existing body to avoid binding issues
-	c.Request.Header.Set("Content-Type", "application/json")
-
-	var eventReq dtos.EventRequest
-	if err := c.ShouldBindJSON(&eventReq); err != nil {
-		eventReq = dtos.EventRequest{
-			DeviceID:   c.Query("device_id"),
-			Platform:   c.Query("platform"),
-			OSVersion:  c.Query("os_version"),
-			AppVersion: c.Query("app_version"),
-		}
+	// Get project ID from context (set by ApiKeyMiddleware)
+	projectID, exists := c.Get("project_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Project not found"})
+		return
 	}
 
-	// Override event type
-	eventReq.EventType = string(models.SessionStart)
-	eventReq.EventName = "session_start"
+	// Bind request body
+	var request dtos.StartSessionRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
 
-	// Record event
-	tc.RecordEvent(c)
+	// Verify device exists and belongs to this project
+	var device models.Device
+	if err := tc.DB.Where("id = ? AND project_id = ?", request.DeviceID, projectID).First(&device).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Device not found or doesn't belong to this project"})
+		return
+	}
+
+	// Update device last seen
+	device.LastSeen = time.Now()
+	if err := tc.DB.Save(&device).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update device last seen"})
+		return
+	}
+
+	// Create event
+	timestamp := time.Now()
+	if request.Timestamp != nil {
+		timestamp = *request.Timestamp
+	}
+	event := models.Event{
+		ProjectID:  projectID.(uuid.UUID),
+		DeviceID:   request.DeviceID,
+		EventType:  models.SessionStart,
+		EventName:  "session_start",
+		Parameters: nil,
+		Timestamp:  timestamp,
+		ReceivedAt: time.Now(),
+	}
+	if err := tc.DB.Create(&event).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to record event"})
+		return
+	}
+
+	// Create response DTO
+	response := dtos.StartSessionResponse{
+		Message: "Session started successfully",
+	}
+
+	// Return response
+	c.JSON(http.StatusCreated, response)
 }
 
 // EndSession ends a session for a device
@@ -298,29 +258,63 @@ func (tc *TelemetryController) StartSession(c *gin.Context) {
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/telemetry/session/end [post]
 func (tc *TelemetryController) EndSession(c *gin.Context) {
-	// Session end is essentially an event with type "session_end"
-	c.Request.Body = http.NoBody // Clear existing body to avoid binding issues
-	c.Request.Header.Set("Content-Type", "application/json")
-
-	var eventReq dtos.EventRequest
-	if err := c.ShouldBindJSON(&eventReq); err != nil {
-		eventReq = dtos.EventRequest{
-			DeviceID:   c.Query("device_id"),
-			Platform:   c.Query("platform"),
-			OSVersion:  c.Query("os_version"),
-			AppVersion: c.Query("app_version"),
-		}
+	// Get project ID from context (set by ApiKeyMiddleware)
+	projectID, exists := c.Get("project_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Project not found"})
+		return
 	}
 
-	// Override event type
-	eventReq.EventType = string(models.SessionEnd)
-	eventReq.EventName = "session_end"
+	// Bind request body
+	var request dtos.EndSessionRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
 
-	// Record event
-	tc.RecordEvent(c)
+	// Verify device exists and belongs to this project
+	var device models.Device
+	if err := tc.DB.Where("id = ? AND project_id = ?", request.DeviceID, projectID).First(&device).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Device not found or doesn't belong to this project"})
+		return
+	}
+
+	// Update device last seen
+	device.LastSeen = time.Now()
+	if err := tc.DB.Save(&device).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update device last seen"})
+		return
+	}
+
+	// Create event
+	timestamp := time.Now()
+	if request.Timestamp != nil {
+		timestamp = *request.Timestamp
+	}
+	event := models.Event{
+		ProjectID:  projectID.(uuid.UUID),
+		DeviceID:   request.DeviceID,
+		EventType:  models.SessionEnd,
+		EventName:  "session_end",
+		Parameters: nil,
+		Timestamp:  timestamp,
+		ReceivedAt: time.Now(),
+	}
+	if err := tc.DB.Create(&event).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to record event"})
+		return
+	}
+
+	// Create response DTO
+	response := dtos.EndSessionResponse{
+		Message: "Session ended successfully",
+	}
+
+	// Return response
+	c.JSON(http.StatusCreated, response)
 }
 
-// RecordInstallation records an app installation
+// RecordInstall records an app installation
 // @Summary Record installation
 // @Description Record a new app installation
 // @Tags telemetry
@@ -332,41 +326,42 @@ func (tc *TelemetryController) EndSession(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/telemetry/install [post]
-func (tc *TelemetryController) RecordInstallation(c *gin.Context) {
+func (tc *TelemetryController) RecordInstall(c *gin.Context) {
+	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Project not found"})
 		return
 	}
 
-	var installReq dtos.InstallationRequest
-	if err := c.ShouldBindJSON(&installReq); err != nil {
+	// Bind request body
+	var request dtos.RecordInstallRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	// Find or create device
-	device, err := tc.createOrUpdateDevice(
-		c,
-		projectID.(uuid.UUID),
-		installReq.DeviceID,
-		installReq.Platform,
-		installReq.OsVersion,
-		installReq.AppVersion,
-	)
+	// Verify device exists and belongs to this project
+	var device models.Device
+	if err := tc.DB.Where("id = ? AND project_id = ?", request.DeviceID, projectID).First(&device).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Device not found or doesn't belong to this project"})
+		return
+	}
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create or update device"})
+	// Update device last seen
+	device.LastSeen = time.Now()
+	if err := tc.DB.Save(&device).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update device last seen"})
 		return
 	}
 
 	// Create installation event
 	event := models.Event{
 		ProjectID:  projectID.(uuid.UUID),
-		DeviceID:   device.ID,
+		DeviceID:   request.DeviceID,
 		EventType:  models.Install,
 		EventName:  "install",
-		Parameters: installReq.Properties,
+		Parameters: request.Parameters,
 		Timestamp:  time.Now(),
 		ReceivedAt: time.Now(),
 	}
@@ -376,5 +371,11 @@ func (tc *TelemetryController) RecordInstallation(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Installation recorded successfully"})
+	// Create response DTO
+	response := dtos.RecordInstallResponse{
+		Message: "Installation recorded successfully",
+	}
+
+	// Return response
+	c.JSON(http.StatusCreated, response)
 }

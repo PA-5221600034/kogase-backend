@@ -16,8 +16,8 @@ type Project struct {
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
-	Devices   []Device       `json:"devices,omitempty" gorm:"foreignKey:ProjectID"`
-	Events    []Event        `json:"events,omitempty" gorm:"foreignKey:ProjectID"`
+	Devices   []Device       `json:"devices,omitempty" gorm:"foreignKey:ProjectID;references:ID"`
+	Events    []Event        `json:"events,omitempty" gorm:"foreignKey:ProjectID;references:ID"`
 }
 
 // BeforeCreate will set a UUID rather than numeric ID and generate an API key

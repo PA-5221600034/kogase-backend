@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// LoginRequest represents the login payload
+// LoginRequest represents the request to login
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
@@ -16,16 +16,18 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"expires_at"`
-	User      struct {
-		ID    uuid.UUID `json:"id"`
-		Email string    `json:"email"`
-		Name  string    `json:"name"`
-	} `json:"user"`
 }
 
-// RegisterRequest represents the registration payload
-type RegisterRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-	Name     string `json:"name" binding:"required"`
+// MeResponse represents the current user information response
+type MeResponse struct {
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// LogoutResponse represents the logout response
+type LogoutResponse struct {
+	Message string `json:"message"`
 }

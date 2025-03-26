@@ -84,8 +84,8 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// APIKeyMiddleware handles API key authentication for the SDK
-func APIKeyMiddleware(db *gorm.DB) gin.HandlerFunc {
+// ApiKeyMiddleware handles API key authentication for the SDK
+func ApiKeyMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get the API key from header
 		apiKey := c.GetHeader("X-Kogase-API-Key")
