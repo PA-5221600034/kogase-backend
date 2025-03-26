@@ -32,12 +32,14 @@ func NewUserController(db *gorm.DB) *UserController {
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/users [get]
 func (uc *UserController) GetUsers(c *gin.Context) {
+	// Get users
 	var users []models.User
 	if err := uc.DB.Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve users"})
 		return
 	}
 
+	// Return users
 	c.JSON(http.StatusOK, users)
 }
 
@@ -55,20 +57,22 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 // @Failure 404 {object} map[string]string
 // @Router /api/v1/users/{id} [get]
 func (uc *UserController) GetUser(c *gin.Context) {
+	// Parse user ID
 	id := c.Param("id")
-
 	userID, err := uuid.Parse(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
 
+	// Get user
 	var user models.User
 	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
+	// Return user
 	c.JSON(http.StatusOK, user)
 }
 
@@ -86,6 +90,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 // @Failure 409 {object} map[string]string
 // @Router /api/v1/users [post]
 func (uc *UserController) CreateUser(c *gin.Context) {
+	// Parse request
 	var userReq dtos.RegisterRequest
 	if err := c.ShouldBindJSON(&userReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -112,12 +117,12 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 		Password: hashedPassword,
 		Name:     userReq.Name,
 	}
-
 	if err := uc.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
 
+	// Return user
 	c.JSON(http.StatusCreated, user)
 }
 
@@ -136,20 +141,22 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 // @Failure 404 {object} map[string]string
 // @Router /api/v1/users/{id} [patch]
 func (uc *UserController) UpdateUser(c *gin.Context) {
+	// Parse user ID
 	id := c.Param("id")
-
 	userID, err := uuid.Parse(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
 
+	// Get user
 	var user models.User
 	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
+	// Parse request
 	var updateReq dtos.UpdateUserRequest
 	if err := c.ShouldBindJSON(&updateReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -161,6 +168,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		user.Name = updateReq.Name
 	}
 
+	// Update password if provided
 	if updateReq.Password != "" {
 		hashedPassword, err := utils.HashPassword(updateReq.Password)
 		if err != nil {
@@ -176,6 +184,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Return user
 	c.JSON(http.StatusOK, user)
 }
 
@@ -193,24 +202,27 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 // @Failure 404 {object} map[string]string
 // @Router /api/v1/users/{id} [delete]
 func (uc *UserController) DeleteUser(c *gin.Context) {
+	// Parse user ID
 	id := c.Param("id")
-
 	userID, err := uuid.Parse(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
 
+	// Get user
 	var user models.User
 	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
+	// Delete user
 	if err := uc.DB.Delete(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
 		return
 	}
 
+	// Return success message
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }

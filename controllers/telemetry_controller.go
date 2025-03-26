@@ -22,11 +22,10 @@ func NewTelemetryController(db *gorm.DB) *TelemetryController {
 	return &TelemetryController{DB: db}
 }
 
-// findOrCreateDevice finds an existing device or creates a new one
-func (tc *TelemetryController) findOrCreateDevice(c *gin.Context, projectID uuid.UUID, deviceID string, platform string, osVersion string, appVersion string) (models.Device, error) {
-	var device models.Device
-
+// createOrUpdateDevice finds an existing device or creates a new one
+func (tc *TelemetryController) createOrUpdateDevice(c *gin.Context, projectID uuid.UUID, deviceID string, platform string, osVersion string, appVersion string) (models.Device, error) {
 	// Try to find the device
+	var device models.Device
 	result := tc.DB.Where("project_id = ? AND device_id = ?", projectID, deviceID).First(&device)
 
 	// Current IP address
@@ -84,10 +83,12 @@ func (tc *TelemetryController) findOrCreateDevice(c *gin.Context, projectID uuid
 		Country:    country,
 	}
 
+	// Create new device
 	if err := tc.DB.Create(&newDevice).Error; err != nil {
 		return newDevice, err
 	}
 
+	// Return new device
 	return newDevice, nil
 }
 
@@ -104,20 +105,22 @@ func (tc *TelemetryController) findOrCreateDevice(c *gin.Context, projectID uuid
 // @Failure 401 {object} map[string]string
 // @Router /api/v1/telemetry/events [post]
 func (tc *TelemetryController) RecordEvent(c *gin.Context) {
+	// Get project ID from context
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Project not found"})
 		return
 	}
 
+	// Parse request
 	var eventReq dtos.EventRequest
 	if err := c.ShouldBindJSON(&eventReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	// Find or create device
-	device, err := tc.findOrCreateDevice(
+	// Create or update device
+	device, err := tc.createOrUpdateDevice(
 		c,
 		projectID.(uuid.UUID),
 		eventReq.DeviceID,
@@ -126,6 +129,7 @@ func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 		eventReq.AppVersion,
 	)
 
+	// If error, return
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create or update device"})
 		return
@@ -147,11 +151,13 @@ func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 		ReceivedAt: time.Now(),
 	}
 
+	// Create event
 	if err := tc.DB.Create(&event).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to record event"})
 		return
 	}
 
+	// Return success message
 	c.JSON(http.StatusCreated, gin.H{"message": "Event recorded successfully"})
 }
 
@@ -182,62 +188,34 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 
 	// Process events in a transaction
 	err := tc.DB.Transaction(func(tx *gorm.DB) error {
+		// Create a transaction-specific controller to use the tx instance
+		txController := &TelemetryController{DB: tx}
+
 		// Keep track of devices to avoid multiple lookups
 		devices := make(map[string]models.Device)
 
-		// Current IP address - get once for efficiency
-		ipAddress := c.ClientIP()
-
-		// Get country from IP - do it once for all devices in the batch
-		country, err := utils.GetCountryFromIP(ipAddress)
-		if err != nil {
-			country = "Unknown"
-		}
-
 		for _, eventReq := range eventsReq.Events {
-			// Find or create device
+			// Check if we've already processed this device in this batch
 			device, exists := devices[eventReq.DeviceID]
 
 			if !exists {
-				var dbDevice models.Device
-				deviceResult := tx.Where("project_id = ? AND device_id = ?", projectID, eventReq.DeviceID).First(&dbDevice)
+				// Find or create device using our helper
+				var err error
+				device, err = txController.createOrUpdateDevice(
+					c,
+					projectID.(uuid.UUID),
+					eventReq.DeviceID,
+					eventReq.Platform,
+					eventReq.OSVersion,
+					eventReq.AppVersion,
+				)
 
-				if deviceResult.Error != nil {
-					// Device doesn't exist, create a new one
-					dbDevice = models.Device{
-						ProjectID:  projectID.(uuid.UUID),
-						DeviceID:   eventReq.DeviceID,
-						Platform:   eventReq.Platform,
-						OSVersion:  eventReq.OSVersion,
-						AppVersion: eventReq.AppVersion,
-						FirstSeen:  time.Now(),
-						LastSeen:   time.Now(),
-						IPAddress:  ipAddress,
-						Country:    country,
-					}
-
-					if err := tx.Create(&dbDevice).Error; err != nil {
-						return err
-					}
-				} else {
-					// Update device
-					dbDevice.LastSeen = time.Now()
-					dbDevice.AppVersion = eventReq.AppVersion
-					dbDevice.OSVersion = eventReq.OSVersion
-
-					// Update IP and country if they've changed
-					if dbDevice.IPAddress != ipAddress {
-						dbDevice.IPAddress = ipAddress
-						dbDevice.Country = country
-					}
-
-					if err := tx.Save(&dbDevice).Error; err != nil {
-						return err
-					}
+				if err != nil {
+					return err
 				}
 
-				devices[eventReq.DeviceID] = dbDevice
-				device = dbDevice
+				// Cache the device for future events in this batch
+				devices[eventReq.DeviceID] = device
 			}
 
 			// Create event
@@ -368,7 +346,7 @@ func (tc *TelemetryController) RecordInstallation(c *gin.Context) {
 	}
 
 	// Find or create device
-	device, err := tc.findOrCreateDevice(
+	device, err := tc.createOrUpdateDevice(
 		c,
 		projectID.(uuid.UUID),
 		installReq.DeviceID,
