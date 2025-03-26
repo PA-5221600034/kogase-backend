@@ -5,35 +5,18 @@ import (
 	"os"
 	"time"
 
+	"github.com/atqamz/kogase-backend/dtos"
 	"github.com/atqamz/kogase-backend/middleware"
 	"github.com/atqamz/kogase-backend/models"
 	"github.com/atqamz/kogase-backend/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 // AuthController handles authentication-related endpoints
 type AuthController struct {
 	DB *gorm.DB
-}
-
-// LoginRequest represents the login payload
-type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
-}
-
-// LoginResponse represents the login response
-type LoginResponse struct {
-	Token     string    `json:"token"`
-	ExpiresAt time.Time `json:"expires_at"`
-	User      struct {
-		ID    uuid.UUID `json:"id"`
-		Email string    `json:"email"`
-		Name  string    `json:"name"`
-	} `json:"user"`
 }
 
 // NewAuthController creates a new AuthController instance
@@ -47,13 +30,13 @@ func NewAuthController(db *gorm.DB) *AuthController {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body LoginRequest true "Login credentials"
-// @Success 200 {object} LoginResponse
+// @Param credentials body dtos.LoginRequest true "Login credentials"
+// @Success 200 {object} dtos.LoginResponse
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
-// @Router /auth/login [post]
+// @Router /api/v1/auth/login [post]
 func (ac *AuthController) Login(c *gin.Context) {
-	var loginReq LoginRequest
+	var loginReq dtos.LoginRequest
 	if err := c.ShouldBindJSON(&loginReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
@@ -91,7 +74,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}
 
 	// Create response
-	var response LoginResponse
+	var response dtos.LoginResponse
 	response.Token = token
 	response.ExpiresAt = expiresAt
 	response.User.ID = user.ID
@@ -110,7 +93,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {object} models.User
 // @Failure 401 {object} map[string]string
-// @Router /auth/me [get]
+// @Router /api/v1/auth/me [get]
 func (ac *AuthController) Me(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -136,7 +119,7 @@ func (ac *AuthController) Me(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {object} map[string]string
 // @Failure 401 {object} map[string]string
-// @Router /auth/logout [post]
+// @Router /api/v1/auth/logout [post]
 func (ac *AuthController) Logout(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
@@ -151,60 +134,6 @@ func (ac *AuthController) Logout(c *gin.Context) {
 	ac.DB.Where("token = ?", tokenString).Delete(&models.AuthToken{})
 
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
-}
-
-// Register registers a new user
-// @Summary Register new user
-// @Description Register a new user account
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param credentials body RegisterRequest true "Registration details"
-// @Success 201 {object} models.User
-// @Failure 400 {object} map[string]string
-// @Failure 409 {object} map[string]string
-// @Router /auth/register [post]
-func (ac *AuthController) Register(c *gin.Context) {
-	var registerReq RegisterRequest
-	if err := c.ShouldBindJSON(&registerReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		return
-	}
-
-	// Check if email already exists
-	var existingUser models.User
-	if err := ac.DB.Where("email = ?", registerReq.Email).First(&existingUser).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email already in use"})
-		return
-	}
-
-	// Hash password
-	hashedPassword, err := utils.HashPassword(registerReq.Password)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-		return
-	}
-
-	// Create user
-	user := models.User{
-		Email:    registerReq.Email,
-		Password: hashedPassword,
-		Name:     registerReq.Name,
-	}
-
-	if err := ac.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, user)
-}
-
-// RegisterRequest represents the registration payload
-type RegisterRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-	Name     string `json:"name" binding:"required"`
 }
 
 // Helper function to create a JWT token

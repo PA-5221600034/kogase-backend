@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/atqamz/kogase-backend/dtos"
 	"github.com/atqamz/kogase-backend/models"
+	"github.com/atqamz/kogase-backend/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -20,21 +22,73 @@ func NewTelemetryController(db *gorm.DB) *TelemetryController {
 	return &TelemetryController{DB: db}
 }
 
-// EventRequest represents a telemetry event request
-type EventRequest struct {
-	DeviceID   string                 `json:"device_id" binding:"required"`
-	EventType  string                 `json:"event_type" binding:"required"`
-	EventName  string                 `json:"event_name" binding:"required"`
-	Parameters map[string]interface{} `json:"parameters"`
-	Timestamp  *time.Time             `json:"timestamp"`
-	Platform   string                 `json:"platform" binding:"required"`
-	OSVersion  string                 `json:"os_version" binding:"required"`
-	AppVersion string                 `json:"app_version" binding:"required"`
-}
+// findOrCreateDevice finds an existing device or creates a new one
+func (tc *TelemetryController) findOrCreateDevice(c *gin.Context, projectID uuid.UUID, deviceID string, platform string, osVersion string, appVersion string) (models.Device, error) {
+	var device models.Device
 
-// EventsRequest represents a batch of telemetry events
-type EventsRequest struct {
-	Events []EventRequest `json:"events" binding:"required"`
+	// Try to find the device
+	result := tc.DB.Where("project_id = ? AND device_id = ?", projectID, deviceID).First(&device)
+
+	// Current IP address
+	ipAddress := c.ClientIP()
+
+	// Device found - update it
+	if result.Error == nil {
+		device.LastSeen = time.Now()
+
+		// Only update these if provided
+		if appVersion != "" {
+			device.AppVersion = appVersion
+		}
+
+		if osVersion != "" {
+			device.OSVersion = osVersion
+		}
+
+		// Update IP and country if they've changed
+		if device.IPAddress != ipAddress {
+			device.IPAddress = ipAddress
+
+			// Get updated country from IP address
+			country, err := utils.GetCountryFromIP(ipAddress)
+			if err == nil && country != "Unknown" {
+				device.Country = country
+			}
+		}
+
+		if err := tc.DB.Save(&device).Error; err != nil {
+			return device, err
+		}
+
+		return device, nil
+	}
+
+	// Device doesn't exist, create a new one
+	// Get country from IP address
+	country, err := utils.GetCountryFromIP(ipAddress)
+	if err != nil {
+		// If geolocation fails, continue with unknown country
+		country = "Unknown"
+	}
+
+	// Create new device
+	newDevice := models.Device{
+		ProjectID:  projectID,
+		DeviceID:   deviceID,
+		Platform:   platform,
+		OSVersion:  osVersion,
+		AppVersion: appVersion,
+		FirstSeen:  time.Now(),
+		LastSeen:   time.Now(),
+		IPAddress:  ipAddress,
+		Country:    country,
+	}
+
+	if err := tc.DB.Create(&newDevice).Error; err != nil {
+		return newDevice, err
+	}
+
+	return newDevice, nil
 }
 
 // RecordEvent records a single telemetry event
@@ -43,12 +97,12 @@ type EventsRequest struct {
 // @Tags telemetry
 // @Accept json
 // @Produce json
-// @Param event body EventRequest true "Event details"
+// @Param event body dtos.EventRequest true "Event details"
 // @Security ApiKeyAuth
 // @Success 201 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
-// @Router /telemetry/events [post]
+// @Router /api/v1/telemetry/events [post]
 func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
@@ -56,41 +110,25 @@ func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 		return
 	}
 
-	var eventReq EventRequest
+	var eventReq dtos.EventRequest
 	if err := c.ShouldBindJSON(&eventReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	// Find or create device
-	var device models.Device
-	deviceResult := tc.DB.Where("project_id = ? AND device_id = ?", projectID, eventReq.DeviceID).First(&device)
+	device, err := tc.findOrCreateDevice(
+		c,
+		projectID.(uuid.UUID),
+		eventReq.DeviceID,
+		eventReq.Platform,
+		eventReq.OSVersion,
+		eventReq.AppVersion,
+	)
 
-	if deviceResult.Error != nil {
-		// Device doesn't exist, create a new one
-		device = models.Device{
-			ProjectID:  projectID.(uuid.UUID),
-			DeviceID:   eventReq.DeviceID,
-			Platform:   eventReq.Platform,
-			OSVersion:  eventReq.OSVersion,
-			AppVersion: eventReq.AppVersion,
-			FirstSeen:  time.Now(),
-			LastSeen:   time.Now(),
-			IPAddress:  c.ClientIP(),
-			Country:    "", // TODO: Implement IP-based geolocation
-		}
-
-		if err := tc.DB.Create(&device).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create device"})
-			return
-		}
-	} else {
-		// Update device
-		device.LastSeen = time.Now()
-		device.AppVersion = eventReq.AppVersion
-		device.OSVersion = eventReq.OSVersion
-		device.IPAddress = c.ClientIP()
-		tc.DB.Save(&device)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create or update device"})
+		return
 	}
 
 	// Create event
@@ -123,12 +161,12 @@ func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 // @Tags telemetry
 // @Accept json
 // @Produce json
-// @Param events body EventsRequest true "Events batch"
+// @Param events body dtos.EventsRequest true "Events batch"
 // @Security ApiKeyAuth
 // @Success 201 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
-// @Router /telemetry/events/batch [post]
+// @Router /api/v1/telemetry/events/batch [post]
 func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
@@ -136,7 +174,7 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 		return
 	}
 
-	var eventsReq EventsRequest
+	var eventsReq dtos.EventsRequest
 	if err := c.ShouldBindJSON(&eventsReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
@@ -146,6 +184,15 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 	err := tc.DB.Transaction(func(tx *gorm.DB) error {
 		// Keep track of devices to avoid multiple lookups
 		devices := make(map[string]models.Device)
+
+		// Current IP address - get once for efficiency
+		ipAddress := c.ClientIP()
+
+		// Get country from IP - do it once for all devices in the batch
+		country, err := utils.GetCountryFromIP(ipAddress)
+		if err != nil {
+			country = "Unknown"
+		}
 
 		for _, eventReq := range eventsReq.Events {
 			// Find or create device
@@ -165,8 +212,8 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 						AppVersion: eventReq.AppVersion,
 						FirstSeen:  time.Now(),
 						LastSeen:   time.Now(),
-						IPAddress:  c.ClientIP(),
-						Country:    "", // TODO: Implement IP-based geolocation
+						IPAddress:  ipAddress,
+						Country:    country,
 					}
 
 					if err := tx.Create(&dbDevice).Error; err != nil {
@@ -177,7 +224,13 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 					dbDevice.LastSeen = time.Now()
 					dbDevice.AppVersion = eventReq.AppVersion
 					dbDevice.OSVersion = eventReq.OSVersion
-					dbDevice.IPAddress = c.ClientIP()
+
+					// Update IP and country if they've changed
+					if dbDevice.IPAddress != ipAddress {
+						dbDevice.IPAddress = ipAddress
+						dbDevice.Country = country
+					}
+
 					if err := tx.Save(&dbDevice).Error; err != nil {
 						return err
 					}
@@ -225,15 +278,32 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 // @Tags telemetry
 // @Accept json
 // @Produce json
-// @Param session body EventRequest true "Session start details"
+// @Param session body dtos.EventRequest true "Session details"
 // @Security ApiKeyAuth
 // @Success 201 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
-// @Router /telemetry/session/start [post]
+// @Router /api/v1/telemetry/session/start [post]
 func (tc *TelemetryController) StartSession(c *gin.Context) {
-	// Set event type to session_start
-	c.Set("eventType", models.SessionStart)
+	// Session start is essentially an event with type "session_start"
+	c.Request.Body = http.NoBody // Clear existing body to avoid binding issues
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	var eventReq dtos.EventRequest
+	if err := c.ShouldBindJSON(&eventReq); err != nil {
+		eventReq = dtos.EventRequest{
+			DeviceID:   c.Query("device_id"),
+			Platform:   c.Query("platform"),
+			OSVersion:  c.Query("os_version"),
+			AppVersion: c.Query("app_version"),
+		}
+	}
+
+	// Override event type
+	eventReq.EventType = string(models.SessionStart)
+	eventReq.EventName = "session_start"
+
+	// Record event
 	tc.RecordEvent(c)
 }
 
@@ -243,87 +313,73 @@ func (tc *TelemetryController) StartSession(c *gin.Context) {
 // @Tags telemetry
 // @Accept json
 // @Produce json
-// @Param session body EventRequest true "Session end details"
+// @Param session body dtos.EventRequest true "Session details"
 // @Security ApiKeyAuth
 // @Success 201 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
-// @Router /telemetry/session/end [post]
+// @Router /api/v1/telemetry/session/end [post]
 func (tc *TelemetryController) EndSession(c *gin.Context) {
-	// Set event type to session_end
-	c.Set("eventType", models.SessionEnd)
+	// Session end is essentially an event with type "session_end"
+	c.Request.Body = http.NoBody // Clear existing body to avoid binding issues
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	var eventReq dtos.EventRequest
+	if err := c.ShouldBindJSON(&eventReq); err != nil {
+		eventReq = dtos.EventRequest{
+			DeviceID:   c.Query("device_id"),
+			Platform:   c.Query("platform"),
+			OSVersion:  c.Query("os_version"),
+			AppVersion: c.Query("app_version"),
+		}
+	}
+
+	// Override event type
+	eventReq.EventType = string(models.SessionEnd)
+	eventReq.EventName = "session_end"
+
+	// Record event
 	tc.RecordEvent(c)
 }
 
-// RecordInstall records an installation event
-// @Summary Record install
-// @Description Record an installation event
+// RecordInstallation records an app installation
+// @Summary Record installation
+// @Description Record a new app installation
 // @Tags telemetry
 // @Accept json
 // @Produce json
-// @Param install body EventRequest true "Install details"
+// @Param installation body dtos.InstallationRequest true "Installation details"
 // @Security ApiKeyAuth
 // @Success 201 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
-// @Router /telemetry/install [post]
-func (tc *TelemetryController) RecordInstall(c *gin.Context) {
-	// Set event type to install
-	c.Set("eventType", models.Install)
-	tc.RecordEvent(c)
-}
-
-// RecordInstallation records a new installation
-// @Summary Record installation
-// @Description Record a new installation event
-// @Tags sdk
-// @Accept json
-// @Produce json
-// @Param installation body InstallationRequest true "Installation data"
-// @Security ApiKeyAuth
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Router /sdk/installation [post]
+// @Router /api/v1/telemetry/install [post]
 func (tc *TelemetryController) RecordInstallation(c *gin.Context) {
-	projectID, _ := c.Get("project_id")
+	projectID, exists := c.Get("project_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Project not found"})
+		return
+	}
 
-	var req InstallationRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var installReq dtos.InstallationRequest
+	if err := c.ShouldBindJSON(&installReq); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	// Find or create device
-	device := models.Device{
-		ProjectID:  projectID.(uuid.UUID),
-		DeviceID:   req.DeviceID,
-		Platform:   req.Platform,
-		AppVersion: req.AppVersion,
-		OSVersion:  req.OsVersion,
-		FirstSeen:  time.Now(),
-		LastSeen:   time.Now(),
-	}
+	device, err := tc.findOrCreateDevice(
+		c,
+		projectID.(uuid.UUID),
+		installReq.DeviceID,
+		installReq.Platform,
+		installReq.OsVersion,
+		installReq.AppVersion,
+	)
 
-	var existingDevice models.Device
-	err := tc.DB.Where("project_id = ? AND device_id = ?", projectID, req.DeviceID).First(&existingDevice).Error
 	if err != nil {
-		if err := tc.DB.Create(&device).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create device"})
-			return
-		}
-	} else {
-		device.ID = existingDevice.ID
-		device.FirstSeen = existingDevice.FirstSeen
-		if err := tc.DB.Model(&device).Updates(map[string]interface{}{
-			"platform":    req.Platform,
-			"app_version": req.AppVersion,
-			"os_version":  req.OsVersion,
-			"last_seen":   time.Now(),
-		}).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update device"})
-			return
-		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create or update device"})
+		return
 	}
 
 	// Create installation event
@@ -331,25 +387,16 @@ func (tc *TelemetryController) RecordInstallation(c *gin.Context) {
 		ProjectID:  projectID.(uuid.UUID),
 		DeviceID:   device.ID,
 		EventType:  models.Install,
-		EventName:  "installation",
-		Parameters: req.Properties,
+		EventName:  "install",
+		Parameters: installReq.Properties,
 		Timestamp:  time.Now(),
 		ReceivedAt: time.Now(),
 	}
 
 	if err := tc.DB.Create(&event).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to record installation event"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to record installation"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "success"})
-}
-
-// InstallationRequest represents an installation request
-type InstallationRequest struct {
-	DeviceID   string         `json:"device_id" binding:"required"`
-	Platform   string         `json:"platform" binding:"required"`
-	AppVersion string         `json:"app_version" binding:"required"`
-	OsVersion  string         `json:"os_version" binding:"required"`
-	Properties map[string]any `json:"properties"`
+	c.JSON(http.StatusCreated, gin.H{"message": "Installation recorded successfully"})
 }

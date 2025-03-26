@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/atqamz/kogase-backend/dtos"
 	"github.com/atqamz/kogase-backend/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -19,11 +20,6 @@ func NewProjectController(db *gorm.DB) *ProjectController {
 	return &ProjectController{DB: db}
 }
 
-// CreateProjectRequest represents the create project payload
-type CreateProjectRequest struct {
-	Name string `json:"name" binding:"required"`
-}
-
 // GetProjects returns all projects accessible by the current user
 // @Summary List projects
 // @Description Get all projects accessible by the current user
@@ -33,7 +29,7 @@ type CreateProjectRequest struct {
 // @Security BearerAuth
 // @Success 200 {array} models.Project
 // @Failure 401 {object} map[string]string
-// @Router /projects [get]
+// @Router /api/v1/projects [get]
 func (pc *ProjectController) GetProjects(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -63,7 +59,7 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 // @Success 200 {object} models.Project
 // @Failure 401 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /projects/{id} [get]
+// @Router /api/v1/projects/{id} [get]
 func (pc *ProjectController) GetProject(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -102,12 +98,12 @@ func (pc *ProjectController) GetProject(c *gin.Context) {
 // @Tags projects
 // @Accept json
 // @Produce json
-// @Param project body CreateProjectRequest true "Project details"
+// @Param project body dtos.CreateProjectRequest true "Project details"
 // @Security BearerAuth
 // @Success 201 {object} models.Project
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
-// @Router /projects [post]
+// @Router /api/v1/projects [post]
 func (pc *ProjectController) CreateProject(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -115,7 +111,7 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 		return
 	}
 
-	var createReq CreateProjectRequest
+	var createReq dtos.CreateProjectRequest
 	if err := c.ShouldBindJSON(&createReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
@@ -142,14 +138,14 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Project ID"
-// @Param project body CreateProjectRequest true "Project details"
+// @Param project body dtos.UpdateProjectRequest true "Project details"
 // @Security BearerAuth
 // @Success 200 {object} models.Project
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /projects/{id} [put]
+// @Router /api/v1/projects/{id} [patch]
 func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -180,13 +176,16 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	}
 
 	// Update project
-	var updateReq CreateProjectRequest
+	var updateReq dtos.UpdateProjectRequest
 	if err := c.ShouldBindJSON(&updateReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	project.Name = updateReq.Name
+	// Only update the fields that were provided
+	if updateReq.Name != "" {
+		project.Name = updateReq.Name
+	}
 
 	if err := pc.DB.Save(&project).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update project"})
@@ -208,7 +207,7 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /projects/{id} [delete]
+// @Router /api/v1/projects/{id} [delete]
 func (pc *ProjectController) DeleteProject(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -260,7 +259,7 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /projects/{id}/apikey [get]
+// @Router /api/v1/projects/{id}/apikey [get]
 func (pc *ProjectController) GetAPIKey(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -306,7 +305,7 @@ func (pc *ProjectController) GetAPIKey(c *gin.Context) {
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /projects/{id}/apikey [post]
+// @Router /api/v1/projects/{id}/apikey [post]
 func (pc *ProjectController) RegenerateAPIKey(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {

@@ -110,6 +110,7 @@ func (s *Server) setupRoutes() {
 
 	// Create controllers
 	authController := controllers.NewAuthController(s.DB)
+	userController := controllers.NewUserController(s.DB)
 	projectController := controllers.NewProjectController(s.DB)
 	telemetryController := controllers.NewTelemetryController(s.DB)
 	analyticsController := controllers.NewAnalyticsController(s.DB)
@@ -117,56 +118,64 @@ func (s *Server) setupRoutes() {
 	// API v1 routes
 	v1 := s.Router.Group("/api/v1")
 
-	// Auth routes (no auth required)
+	// Auth routes
 	auth := v1.Group("/auth")
 	{
 		auth.POST("/login", authController.Login)
-		auth.POST("/register", authController.Register)
+		auth.GET("/me", middleware.AuthMiddleware(s.DB), authController.Me)
+		auth.POST("/logout", middleware.AuthMiddleware(s.DB), authController.Logout)
 	}
 
-	// SDK routes (API key required)
-	sdk := v1.Group("/sdk")
-	sdk.Use(middleware.APIKeyMiddleware(s.DB))
+	// User Management routes (authenticated)
+	users := v1.Group("/users")
+	users.Use(middleware.AuthMiddleware(s.DB))
+	{
+		users.GET("", userController.GetUsers)
+		users.POST("", userController.CreateUser)
+		users.GET("/:id", userController.GetUser)
+		users.PATCH("/:id", userController.UpdateUser)
+		users.DELETE("/:id", userController.DeleteUser)
+	}
+
+	// Project Management routes (authenticated)
+	projects := v1.Group("/projects")
+	projects.Use(middleware.AuthMiddleware(s.DB))
+	{
+		projects.GET("", projectController.GetProjects)
+		projects.POST("", projectController.CreateProject)
+		projects.GET("/:id", projectController.GetProject)
+		projects.PATCH("/:id", projectController.UpdateProject)
+		projects.DELETE("/:id", projectController.DeleteProject)
+		projects.GET("/:id/apikey", projectController.GetAPIKey)
+		projects.POST("/:id/apikey", projectController.RegenerateAPIKey)
+	}
+
+	// Telemetry Collection routes (API key required)
+	telemetry := v1.Group("/telemetry")
+	telemetry.Use(middleware.APIKeyMiddleware(s.DB))
 	{
 		// Events
-		sdk.POST("/event", telemetryController.RecordEvent)
-		sdk.POST("/events", telemetryController.RecordEvents)
+		telemetry.POST("/events", telemetryController.RecordEvent)
+		telemetry.POST("/events/batch", telemetryController.RecordEvents)
 
 		// Sessions
-		sdk.POST("/session/start", telemetryController.StartSession)
-		sdk.POST("/session/end", telemetryController.EndSession)
+		telemetry.POST("/session/start", telemetryController.StartSession)
+		telemetry.POST("/session/end", telemetryController.EndSession)
 
 		// Installation
-		sdk.POST("/installation", telemetryController.RecordInstallation)
+		telemetry.POST("/install", telemetryController.RecordInstallation)
 	}
 
-	// Dashboard routes (JWT auth required)
-	dashboard := v1.Group("/dashboard")
-	dashboard.Use(middleware.AuthMiddleware(s.DB))
+	// Analytics routes (authenticated)
+	analytics := v1.Group("/analytics")
+	analytics.Use(middleware.AuthMiddleware(s.DB))
 	{
-		// User routes
-		dashboard.GET("/user/me", authController.Me)
-		dashboard.POST("/user/logout", authController.Logout)
-
-		// Project routes
-		projects := dashboard.Group("/projects")
-		{
-			projects.GET("", projectController.GetProjects)
-			projects.POST("", projectController.CreateProject)
-			projects.GET("/:id", projectController.GetProject)
-			projects.PUT("/:id", projectController.UpdateProject)
-			projects.DELETE("/:id", projectController.DeleteProject)
-			projects.GET("/:id/api-key", projectController.GetAPIKey)
-			projects.POST("/:id/api-key/regenerate", projectController.RegenerateAPIKey)
-		}
-
-		// Analytics routes
-		analytics := dashboard.Group("/analytics")
-		{
-			analytics.GET("/metrics", analyticsController.GetMetrics)
-			analytics.GET("/events", analyticsController.GetEvents)
-			analytics.GET("/devices", analyticsController.GetDevices)
-		}
+		analytics.GET("/metrics", analyticsController.GetMetrics)
+		analytics.GET("/events", analyticsController.GetEvents)
+		analytics.GET("/devices", analyticsController.GetDevices)
+		analytics.GET("/retention", analyticsController.GetRetention)
+		analytics.GET("/sessions", analyticsController.GetSessions)
+		analytics.GET("/active-users", analyticsController.GetActiveUsers)
 	}
 }
 
