@@ -148,14 +148,12 @@ func (s *Server) setupRoutes() {
 	// Project routes
 	projects := v1.Group("/projects")
 	{
-		// API key routes (for game clients)
-		projects.GET("/apikey", middleware.ApiKeyMiddleware(s.DB), projectController.GetProjectByApiKey)
+		projects.GET("/apikey", middleware.ApiKeyMiddleware(s.DB), projectController.GetProjectWithApiKey)
+		projects.POST("", projectController.CreateProject)
 
-		// Auth routes (for dashboard)
 		authProjects := projects.Group("")
 		authProjects.Use(middleware.AuthMiddleware(s.DB))
 		{
-			authProjects.POST("", projectController.CreateProject)
 			authProjects.GET("/:id", projectController.GetProject)
 			authProjects.GET("", projectController.GetProjects)
 			authProjects.PATCH("/:id", projectController.UpdateProject)
