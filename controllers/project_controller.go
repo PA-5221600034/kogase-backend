@@ -50,7 +50,10 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 	// Bind request body
 	var request dtos.CreateProjectRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid request",
+		}
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
@@ -61,7 +64,10 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 		OwnerID: userID.(uuid.UUID),
 	}
 	if err := pc.DB.Create(&project).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create project"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to create project",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
@@ -93,7 +99,10 @@ func (pc *ProjectController) GetProject(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
@@ -101,20 +110,29 @@ func (pc *ProjectController) GetProject(c *gin.Context) {
 	id := c.Param("id")
 	projectID, err := uuid.Parse(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid project ID",
+		}
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	// Get project
 	var project models.Project
 	if err := pc.DB.First(&project, "id = ?", projectID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		response := dtos.ErrorResponse{
+			Error: "Project not found",
+		}
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
 	// Check if user has access to project (only owner has access)
 	if project.OwnerID != userID.(uuid.UUID) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		response := dtos.ErrorResponse{
+			Error: "Access denied",
+		}
+		c.JSON(http.StatusForbidden, response)
 		return
 	}
 
@@ -146,14 +164,20 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
 	// Get projects, users can only see their own projects
 	var projects []models.Project
 	if err := pc.DB.Where("owner_id = ?", userID).Find(&projects).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve projects"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to retrieve projects",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
@@ -192,7 +216,10 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
@@ -200,27 +227,39 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	id := c.Param("id")
 	projectID, err := uuid.Parse(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid project ID",
+		}
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	// Get project
 	var project models.Project
 	if err := pc.DB.First(&project, "id = ?", projectID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		response := dtos.ErrorResponse{
+			Error: "Project not found",
+		}
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
 	// Check if user has access to project (only owner has access)
 	if project.OwnerID != userID.(uuid.UUID) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		response := dtos.ErrorResponse{
+			Error: "Access denied",
+		}
+		c.JSON(http.StatusForbidden, response)
 		return
 	}
 
 	// Bind request body
 	var updateReq dtos.UpdateProjectRequest
 	if err := c.ShouldBindJSON(&updateReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid request",
+		}
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
@@ -230,7 +269,10 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	}
 
 	if err := pc.DB.Save(&project).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update project"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to update project",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
@@ -263,7 +305,10 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
@@ -271,26 +316,38 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 	id := c.Param("id")
 	projectID, err := uuid.Parse(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid project ID",
+		}
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	// Get project
 	var project models.Project
 	if err := pc.DB.First(&project, "id = ?", projectID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		response := dtos.ErrorResponse{
+			Error: "Project not found",
+		}
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
 	// Check if user has access to project (only owner has access)
 	if project.OwnerID != userID.(uuid.UUID) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		response := dtos.ErrorResponse{
+			Error: "Access denied",
+		}
+		c.JSON(http.StatusForbidden, response)
 		return
 	}
 
 	// Delete project
 	if err := pc.DB.Delete(&project).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete project"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to delete project",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
@@ -303,7 +360,7 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// GetProjectByApiKey returns the project through API key
+// GetProjectWithApiKey returns the project through API key
 // @Summary Get project by API key
 // @Description Get project by API key
 // @Tags projects
@@ -317,18 +374,24 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 // @Failure 403 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Router /api/v1/projects/apikey [get]
-func (pc *ProjectController) GetProjectByApiKey(c *gin.Context) {
+func (pc *ProjectController) GetProjectWithApiKey(c *gin.Context) {
 	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Project not found"})
+		response := dtos.ErrorResponse{
+			Error: "Project not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
 	// Get project
 	var project models.Project
 	if err := pc.DB.First(&project, "id = ?", projectID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		response := dtos.ErrorResponse{
+			Error: "Project not found",
+		}
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
@@ -364,7 +427,10 @@ func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
@@ -372,20 +438,29 @@ func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
 	id := c.Param("id")
 	projectID, err := uuid.Parse(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid project ID",
+		}
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	// Get project
 	var project models.Project
 	if err := pc.DB.First(&project, "id = ?", projectID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		response := dtos.ErrorResponse{
+			Error: "Project not found",
+		}
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
 	// Check if user has access to project (only owner has access)
 	if project.OwnerID != userID.(uuid.UUID) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		response := dtos.ErrorResponse{
+			Error: "Access denied",
+		}
+		c.JSON(http.StatusForbidden, response)
 		return
 	}
 
@@ -394,7 +469,10 @@ func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
 
 	// Save project
 	if err := pc.DB.Save(&project).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to regenerate API key"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to regenerate API key",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 

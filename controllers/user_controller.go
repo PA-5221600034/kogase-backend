@@ -37,21 +37,30 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	// Parse request
 	var userReq dtos.CreateUserRequest
 	if err := c.ShouldBindJSON(&userReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid request",
+		}
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	// Check if email already exists
 	var existingUser models.User
 	if err := uc.DB.Where("email = ?", userReq.Email).First(&existingUser).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email already in use"})
+		response := dtos.ErrorResponse{
+			Error: "Email already in use",
+		}
+		c.JSON(http.StatusConflict, response)
 		return
 	}
 
 	// Hash password
 	hashedPassword, err := utils.HashPassword(userReq.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to hash password",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
@@ -62,7 +71,10 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 		Name:     userReq.Name,
 	}
 	if err := uc.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to create user",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
@@ -87,14 +99,20 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
 	userID, exist := c.Get("user_id")
 	if !exist {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
 	// Get user
 	var user models.User
 	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
@@ -123,7 +141,10 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 	// Get users
 	var users []models.User
 	if err := uc.DB.Find(&users).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve users"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to retrieve users",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
@@ -161,21 +182,30 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
 	userID, exist := c.Get("user_id")
 	if !exist {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
 	// Get user
 	var user models.User
 	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
 	// Parse request
 	var updateReq dtos.UpdateUserRequest
 	if err := c.ShouldBindJSON(&updateReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid request",
+		}
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
@@ -188,7 +218,10 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	if updateReq.Password != "" {
 		hashedPassword, err := utils.HashPassword(updateReq.Password)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+			response := dtos.ErrorResponse{
+				Error: "Failed to hash password",
+			}
+			c.JSON(http.StatusInternalServerError, response)
 			return
 		}
 		user.Password = hashedPassword
@@ -196,7 +229,10 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 
 	// Save user
 	if err := uc.DB.Save(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to update user",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
@@ -227,20 +263,29 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
 	userID, exist := c.Get("user_id")
 	if !exist {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
 	// Get user
 	var user models.User
 	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
 	// Delete user
 	if err := uc.DB.Delete(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to delete user",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 

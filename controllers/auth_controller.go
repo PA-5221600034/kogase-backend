@@ -35,27 +35,39 @@ func (ac *AuthController) Login(c *gin.Context) {
 	// Bind request body
 	var loginReq dtos.LoginRequest
 	if err := c.ShouldBindJSON(&loginReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid request",
+		}
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	// Find user by email
 	var user models.User
 	if err := ac.DB.Where("email = ?", loginReq.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid credentials",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
 	// Verify password
 	if !utils.CheckPasswordHash(loginReq.Password, user.Password) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		response := dtos.ErrorResponse{
+			Error: "Invalid credentials",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
 	// Create token - use new utility function instead of local helper
 	token, expiresAt, err := utils.CreateToken(user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create token"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to create token",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
@@ -66,7 +78,10 @@ func (ac *AuthController) Login(c *gin.Context) {
 		ExpiresAt: expiresAt,
 	}
 	if err := ac.DB.Create(&authToken).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create token"})
+		response := dtos.ErrorResponse{
+			Error: "Failed to create token",
+		}
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
@@ -93,14 +108,20 @@ func (ac *AuthController) Me(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
 	// Get user
 	var user models.User
 	if err := ac.DB.First(&user, "id = ?", userID).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		response := dtos.ErrorResponse{
+			Error: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
@@ -131,7 +152,10 @@ func (ac *AuthController) Logout(c *gin.Context) {
 	// Get auth header
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+		response := dtos.ErrorResponse{
+			Error: "Authorization header is required",
+		}
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
