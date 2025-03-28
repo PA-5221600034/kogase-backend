@@ -50,7 +50,7 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 
 	// Try to find the device
 	var device models.Device
-	result := dc.DB.Where("project_id = ? AND machine_code = ?", projectID, request.MachineCode).First(&device)
+	result := dc.DB.Where("project_id = ? AND machine_code = ?", projectID, request.Identifier).First(&device)
 
 	// Client IP address
 	ipAddress := c.ClientIP()
@@ -64,8 +64,8 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 			device.AppVersion = request.AppVersion
 		}
 
-		if request.OsVersion != "" {
-			device.OsVersion = request.OsVersion
+		if request.PlatformVersion != "" {
+			device.PlatformVersion = request.PlatformVersion
 		}
 
 		// Update IP and country if they've changed
@@ -105,15 +105,15 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 
 	// Create new device
 	newDevice := models.Device{
-		ProjectID:   projectID.(uuid.UUID),
-		MachineCode: request.MachineCode,
-		Platform:    request.Platform,
-		OsVersion:   request.OsVersion,
-		AppVersion:  request.AppVersion,
-		FirstSeen:   time.Now(),
-		LastSeen:    time.Now(),
-		IpAddress:   ipAddress,
-		Country:     country,
+		ProjectID:       projectID.(uuid.UUID),
+		Identifier:      request.Identifier,
+		Platform:        request.Platform,
+		PlatformVersion: request.PlatformVersion,
+		AppVersion:      request.AppVersion,
+		FirstSeen:       time.Now(),
+		LastSeen:        time.Now(),
+		IpAddress:       ipAddress,
+		Country:         country,
 	}
 
 	// Create new device
@@ -166,13 +166,13 @@ func (dc *DeviceController) GetDevice(c *gin.Context) {
 
 	// Create response DTO
 	response := dtos.GetDeviceResponse{
-		ID:          device.ID,
-		MachineCode: device.MachineCode,
-		Platform:    device.Platform,
-		OsVersion:   device.OsVersion,
-		AppVersion:  device.AppVersion,
-		FirstSeen:   device.FirstSeen,
-		LastSeen:    device.LastSeen,
+		ID:              device.ID,
+		Identifier:      device.Identifier,
+		Platform:        device.Platform,
+		PlatformVersion: device.PlatformVersion,
+		AppVersion:      device.AppVersion,
+		FirstSeen:       device.FirstSeen,
+		LastSeen:        device.LastSeen,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -259,13 +259,13 @@ func (dc *DeviceController) GetDevices(c *gin.Context) {
 	deviceResponses := make([]dtos.GetDeviceResponse, len(devices))
 	for i, device := range devices {
 		deviceResponses[i] = dtos.GetDeviceResponse{
-			ID:          device.ID,
-			MachineCode: device.MachineCode,
-			Platform:    device.Platform,
-			OsVersion:   device.OsVersion,
-			AppVersion:  device.AppVersion,
-			FirstSeen:   device.FirstSeen,
-			LastSeen:    device.LastSeen,
+			ID:              device.ID,
+			Identifier:      device.Identifier,
+			Platform:        device.Platform,
+			PlatformVersion: device.PlatformVersion,
+			AppVersion:      device.AppVersion,
+			FirstSeen:       device.FirstSeen,
+			LastSeen:        device.LastSeen,
 		}
 	}
 
@@ -328,8 +328,8 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 		device.AppVersion = request.AppVersion
 	}
 
-	if request.OsVersion != "" {
-		device.OsVersion = request.OsVersion
+	if request.PlatformVersion != "" {
+		device.PlatformVersion = request.PlatformVersion
 	}
 
 	// Always update last seen timestamp
@@ -343,13 +343,13 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 
 	// Create response DTO
 	response := dtos.GetDeviceResponse{
-		ID:          device.ID,
-		MachineCode: device.MachineCode,
-		Platform:    device.Platform,
-		OsVersion:   device.OsVersion,
-		AppVersion:  device.AppVersion,
-		FirstSeen:   device.FirstSeen,
-		LastSeen:    device.LastSeen,
+		ID:              device.ID,
+		Identifier:      device.Identifier,
+		Platform:        device.Platform,
+		PlatformVersion: device.PlatformVersion,
+		AppVersion:      device.AppVersion,
+		FirstSeen:       device.FirstSeen,
+		LastSeen:        device.LastSeen,
 	}
 
 	// Return response

@@ -8,10 +8,10 @@ import (
 
 // CreateDeviceRequest represents a request to register or update a device
 type CreateDeviceRequest struct {
-	MachineCode string `json:"machine_code" binding:"required"`
-	Platform    string `json:"platform" binding:"required"`
-	OsVersion   string `json:"os_version" binding:"required"`
-	AppVersion  string `json:"app_version" binding:"required"`
+	Identifier      string `json:"identifier" binding:"required"`
+	Platform        string `json:"platform" binding:"required"`
+	PlatformVersion string `json:"platform_version" binding:"required"`
+	AppVersion      string `json:"app_version" binding:"required"`
 }
 
 // CreateDeviceResponse represents a response containing device information
@@ -21,15 +21,15 @@ type CreateDeviceResponse struct {
 
 // GetDeviceResponse represents a response containing device information
 type GetDeviceResponse struct {
-	ID          uuid.UUID `json:"id"`
-	MachineCode string    `json:"machine_code"`
-	Platform    string    `json:"platform"`
-	OsVersion   string    `json:"os_version"`
-	AppVersion  string    `json:"app_version"`
-	FirstSeen   time.Time `json:"first_seen"`
-	LastSeen    time.Time `json:"last_seen"`
-	IpAddress   string    `json:"ip_address,omitempty"`
-	Country     string    `json:"country,omitempty"`
+	ID              uuid.UUID `json:"id"`
+	Identifier      string    `json:"identifier"`
+	Platform        string    `json:"platform"`
+	PlatformVersion string    `json:"platform_version"`
+	AppVersion      string    `json:"app_version"`
+	FirstSeen       time.Time `json:"first_seen"`
+	LastSeen        time.Time `json:"last_seen"`
+	IpAddress       string    `json:"ip_address,omitempty"`
+	Country         string    `json:"country,omitempty"`
 }
 
 // GetDevicesRequestQuery represents a request query to list devices with filters
@@ -51,23 +51,23 @@ type GetDevicesResponse struct {
 
 // UpdateDeviceRequest represents a request to update a device
 type UpdateDeviceRequest struct {
-	MachineCode string `json:"machine_code,omitempty"`
-	Platform    string `json:"platform,omitempty"`
-	OsVersion   string `json:"os_version,omitempty"`
-	AppVersion  string `json:"app_version,omitempty"`
+	Identifier      string `json:"identifier,omitempty"`
+	Platform        string `json:"platform,omitempty"`
+	PlatformVersion string `json:"platform_version,omitempty"`
+	AppVersion      string `json:"app_version,omitempty"`
 }
 
 // UpdateDeviceResponse represent a response for a device update
 type UpdateDeviceResponse struct {
-	ID          uuid.UUID `json:"id"`
-	MachineCode string    `json:"machine_code"`
-	Platform    string    `json:"platform"`
-	OsVersion   string    `json:"os_version"`
-	AppVersion  string    `json:"app_version"`
-	FirstSeen   time.Time `json:"first_seen"`
-	LastSeen    time.Time `json:"last_seen"`
-	IpAddress   string    `json:"ip_address,omitempty"`
-	Country     string    `json:"country,omitempty"`
+	ID              uuid.UUID `json:"id"`
+	Identifier      string    `json:"identifier"`
+	Platform        string    `json:"platform"`
+	PlatformVersion string    `json:"platform_version"`
+	AppVersion      string    `json:"app_version"`
+	FirstSeen       time.Time `json:"first_seen"`
+	LastSeen        time.Time `json:"last_seen"`
+	IpAddress       string    `json:"ip_address,omitempty"`
+	Country         string    `json:"country,omitempty"`
 }
 
 // DeleteDeviceResponse represents a response for a device deletion
