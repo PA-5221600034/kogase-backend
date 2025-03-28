@@ -96,20 +96,13 @@ func (s *Server) setupRoutes() {
 	// Global middleware
 	s.Router.Use(middleware.CORSMiddleware())
 
-	// Health check endpoint
-	s.Router.GET("/api/v1/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":  "ok",
-			"version": "1.0.0",
-		})
-	})
-
 	// Swagger documentation
 	s.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Create controllers
 	authController := controllers.NewAuthController(s.DB)
 	deviceController := controllers.NewDeviceController(s.DB)
+	healthController := controllers.NewHealthController(s.DB)
 	projectController := controllers.NewProjectController(s.DB)
 	telemetryController := controllers.NewTelemetryController(s.DB)
 	userController := controllers.NewUserController(s.DB)
@@ -144,6 +137,12 @@ func (s *Server) setupRoutes() {
 			authDevices.GET("", deviceController.GetDevices)
 			authDevices.DELETE("/:id", deviceController.DeleteDevice)
 		}
+	}
+
+	health := v1.Group("/health")
+	{
+		health.GET("", healthController.GetHealth)
+		health.GET("/apikey", middleware.ApiKeyMiddleware(s.DB), healthController.GetHealthWithApiKey)
 	}
 
 	// Project routes
