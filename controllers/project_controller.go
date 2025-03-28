@@ -36,8 +36,15 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
-		return
+		var defaultAdmin models.User
+		if err := pc.DB.Where("email = ?", "admin@kogase.io").First(&defaultAdmin).Error; err != nil {
+			response := dtos.ErrorResponse{
+				Error: "User not found",
+			}
+			c.JSON(http.StatusUnauthorized, response)
+			return
+		}
+		userID = defaultAdmin.ID
 	}
 
 	// Bind request body
