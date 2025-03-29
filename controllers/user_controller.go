@@ -38,7 +38,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	var userReq dtos.CreateUserRequest
 	if err := c.ShouldBindJSON(&userReq); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid request",
+			Message: "Invalid request",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -48,7 +48,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	var existingUser models.User
 	if err := uc.DB.Where("email = ?", userReq.Email).First(&existingUser).Error; err == nil {
 		response := dtos.ErrorResponse{
-			Error: "Email already in use",
+			Message: "Email already in use",
 		}
 		c.JSON(http.StatusConflict, response)
 		return
@@ -58,7 +58,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	hashedPassword, err := utils.HashPassword(userReq.Password)
 	if err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to hash password",
+			Message: "Failed to hash password",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -72,7 +72,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	}
 	if err := uc.DB.Create(&user).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to create user",
+			Message: "Failed to create user",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -100,7 +100,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	userID, exist := c.Get("user_id")
 	if !exist {
 		response := dtos.ErrorResponse{
-			Error: "User not found",
+			Message: "User not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -110,7 +110,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	var user models.User
 	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "User not found",
+			Message: "User not found",
 		}
 		c.JSON(http.StatusNotFound, response)
 		return
@@ -142,7 +142,7 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 	var users []models.User
 	if err := uc.DB.Find(&users).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to retrieve users",
+			Message: "Failed to retrieve users",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -183,7 +183,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	userID, exist := c.Get("user_id")
 	if !exist {
 		response := dtos.ErrorResponse{
-			Error: "User not found",
+			Message: "User not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -193,7 +193,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	var user models.User
 	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "User not found",
+			Message: "User not found",
 		}
 		c.JSON(http.StatusNotFound, response)
 		return
@@ -203,7 +203,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	var updateReq dtos.UpdateUserRequest
 	if err := c.ShouldBindJSON(&updateReq); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid request",
+			Message: "Invalid request",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -219,7 +219,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		hashedPassword, err := utils.HashPassword(updateReq.Password)
 		if err != nil {
 			response := dtos.ErrorResponse{
-				Error: "Failed to hash password",
+				Message: "Failed to hash password",
 			}
 			c.JSON(http.StatusInternalServerError, response)
 			return
@@ -230,7 +230,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	// Save user
 	if err := uc.DB.Save(&user).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to update user",
+			Message: "Failed to update user",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -264,7 +264,7 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 	userID, exist := c.Get("user_id")
 	if !exist {
 		response := dtos.ErrorResponse{
-			Error: "User not found",
+			Message: "User not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -274,7 +274,7 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 	var user models.User
 	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "User not found",
+			Message: "User not found",
 		}
 		c.JSON(http.StatusNotFound, response)
 		return
@@ -283,7 +283,7 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 	// Delete user
 	if err := uc.DB.Delete(&user).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to delete user",
+			Message: "Failed to delete user",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return

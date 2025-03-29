@@ -36,7 +36,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	var loginReq dtos.LoginRequest
 	if err := c.ShouldBindJSON(&loginReq); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid request",
+			Message: "Invalid request",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -46,7 +46,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	var user models.User
 	if err := ac.DB.Where("email = ?", loginReq.Email).First(&user).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid credentials",
+			Message: "Invalid credentials",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -55,7 +55,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	// Verify password
 	if !utils.CheckPasswordHash(loginReq.Password, user.Password) {
 		response := dtos.ErrorResponse{
-			Error: "Invalid credentials",
+			Message: "Invalid credentials",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -65,7 +65,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	token, expiresAt, err := utils.CreateToken(user)
 	if err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to create token",
+			Message: "Failed to create token",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -79,7 +79,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}
 	if err := ac.DB.Create(&authToken).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to create token",
+			Message: "Failed to create token",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -109,7 +109,7 @@ func (ac *AuthController) Me(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "User not found",
+			Message: "User not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -119,7 +119,7 @@ func (ac *AuthController) Me(c *gin.Context) {
 	var user models.User
 	if err := ac.DB.First(&user, "id = ?", userID).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "User not found",
+			Message: "User not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -153,7 +153,7 @@ func (ac *AuthController) Logout(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		response := dtos.ErrorResponse{
-			Error: "Authorization header is required",
+			Message: "Authorization header is required",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return

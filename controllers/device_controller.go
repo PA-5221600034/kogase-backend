@@ -38,7 +38,7 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Project not found",
+			Message: "Project not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -48,7 +48,7 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 	var request dtos.CreateDeviceRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid request",
+			Message: "Invalid request",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -88,7 +88,7 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 		// Save the device
 		if err := dc.DB.Save(&device).Error; err != nil {
 			response := dtos.ErrorResponse{
-				Error: "Failed to update device",
+				Message: "Failed to update device",
 			}
 			c.JSON(http.StatusInternalServerError, response)
 			return
@@ -128,7 +128,7 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 	// Create new device
 	if err := dc.DB.Create(&newDevice).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to create device",
+			Message: "Failed to create device",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -159,7 +159,7 @@ func (dc *DeviceController) GetDevice(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Project not found",
+			Message: "Project not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -169,7 +169,7 @@ func (dc *DeviceController) GetDevice(c *gin.Context) {
 	deviceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid device ID",
+			Message: "Invalid device ID",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -179,7 +179,7 @@ func (dc *DeviceController) GetDevice(c *gin.Context) {
 	var device models.Device
 	if err := dc.DB.Where("id = ? AND project_id = ?", deviceID, projectID).First(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Device not found",
+			Message: "Device not found",
 		}
 		c.JSON(http.StatusNotFound, response)
 		return
@@ -220,7 +220,7 @@ func (dc *DeviceController) GetDevices(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Not authenticated",
+			Message: "Not authenticated",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -230,7 +230,7 @@ func (dc *DeviceController) GetDevices(c *gin.Context) {
 	var query dtos.GetDevicesRequestQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid query parameters",
+			Message: "Invalid query parameters",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -269,7 +269,7 @@ func (dc *DeviceController) GetDevices(c *gin.Context) {
 	var totalCount int64
 	if err := dbQuery.Count(&totalCount).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to count devices",
+			Message: "Failed to count devices",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -282,7 +282,7 @@ func (dc *DeviceController) GetDevices(c *gin.Context) {
 		Offset(query.Offset).
 		Find(&devices).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to retrieve devices",
+			Message: "Failed to retrieve devices",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -332,7 +332,7 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Project not found",
+			Message: "Project not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -342,7 +342,7 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 	deviceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid device ID",
+			Message: "Invalid device ID",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -352,7 +352,7 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 	var request dtos.UpdateDeviceRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid request",
+			Message: "Invalid request",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -362,7 +362,7 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 	var device models.Device
 	if err := dc.DB.Where("id = ? AND project_id = ?", deviceID, projectID).First(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Device not found",
+			Message: "Device not found",
 		}
 		c.JSON(http.StatusNotFound, response)
 		return
@@ -383,7 +383,7 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 	// Save changes
 	if err := dc.DB.Save(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to update device",
+			Message: "Failed to update device",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -420,7 +420,7 @@ func (dc *DeviceController) DeleteDevice(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Not authenticated",
+			Message: "Not authenticated",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -430,7 +430,7 @@ func (dc *DeviceController) DeleteDevice(c *gin.Context) {
 	deviceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid device ID",
+			Message: "Invalid device ID",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -440,7 +440,7 @@ func (dc *DeviceController) DeleteDevice(c *gin.Context) {
 	var device models.Device
 	if err := dc.DB.Preload("Project").First(&device, "id = ?", deviceID).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Device not found",
+			Message: "Device not found",
 		}
 		c.JSON(http.StatusNotFound, response)
 		return
@@ -449,7 +449,7 @@ func (dc *DeviceController) DeleteDevice(c *gin.Context) {
 	// Check if user owns the project
 	if device.Project.OwnerID != userID.(uuid.UUID) {
 		response := dtos.ErrorResponse{
-			Error: "Access denied",
+			Message: "Access denied",
 		}
 		c.JSON(http.StatusForbidden, response)
 		return
@@ -458,7 +458,7 @@ func (dc *DeviceController) DeleteDevice(c *gin.Context) {
 	// Delete device (this will be a soft delete due to gorm settings)
 	if err := dc.DB.Delete(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to delete device",
+			Message: "Failed to delete device",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return

@@ -25,10 +25,11 @@ func (h *HealthController) GetHealth(c *gin.Context) {
 }
 
 func (h *HealthController) GetHealthWithApiKey(c *gin.Context) {
-	exists := c.GetBool("project_id")
+	// Get project ID from context (set by ApiKeyMiddleware)
+	_, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Not authenticated",
+			Message: "Not authenticated",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return

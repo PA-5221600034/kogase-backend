@@ -38,7 +38,7 @@ func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Project not found",
+			Message: "Project not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -48,7 +48,7 @@ func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 	var request dtos.RecordEventRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid request",
+			Message: "Invalid request",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -58,7 +58,7 @@ func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 	var device models.Device
 	if err := tc.DB.Where("id = ? AND project_id = ?", request.DeviceID, projectID).First(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Device not found or doesn't belong to this project",
+			Message: "Device not found or doesn't belong to this project",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -68,7 +68,7 @@ func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 	device.LastSeen = time.Now()
 	if err := tc.DB.Save(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to update device last seen",
+			Message: "Failed to update device last seen",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -90,7 +90,7 @@ func (tc *TelemetryController) RecordEvent(c *gin.Context) {
 	}
 	if err := tc.DB.Create(&event).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to record event",
+			Message: "Failed to record event",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -122,7 +122,7 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Project not found",
+			Message: "Project not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -131,7 +131,7 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 	var request dtos.RecordEventsRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid request",
+			Message: "Invalid request",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -184,7 +184,7 @@ func (tc *TelemetryController) RecordEvents(c *gin.Context) {
 
 	if err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to record events",
+			Message: "Failed to record events",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -217,7 +217,7 @@ func (tc *TelemetryController) StartSession(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Project not found",
+			Message: "Project not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -227,7 +227,7 @@ func (tc *TelemetryController) StartSession(c *gin.Context) {
 	var request dtos.StartSessionRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid request",
+			Message: "Invalid request",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -237,7 +237,7 @@ func (tc *TelemetryController) StartSession(c *gin.Context) {
 	var device models.Device
 	if err := tc.DB.Where("id = ? AND project_id = ?", request.DeviceID, projectID).First(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Device not found or doesn't belong to this project",
+			Message: "Device not found or doesn't belong to this project",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -247,7 +247,7 @@ func (tc *TelemetryController) StartSession(c *gin.Context) {
 	device.LastSeen = time.Now()
 	if err := tc.DB.Save(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to update device last seen",
+			Message: "Failed to update device last seen",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -269,7 +269,7 @@ func (tc *TelemetryController) StartSession(c *gin.Context) {
 	}
 	if err := tc.DB.Create(&event).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to record event",
+			Message: "Failed to record event",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -301,7 +301,7 @@ func (tc *TelemetryController) EndSession(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Project not found",
+			Message: "Project not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -311,7 +311,7 @@ func (tc *TelemetryController) EndSession(c *gin.Context) {
 	var request dtos.EndSessionRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid request",
+			Message: "Invalid request",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -321,7 +321,7 @@ func (tc *TelemetryController) EndSession(c *gin.Context) {
 	var device models.Device
 	if err := tc.DB.Where("id = ? AND project_id = ?", request.DeviceID, projectID).First(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Device not found or doesn't belong to this project",
+			Message: "Device not found or doesn't belong to this project",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -331,7 +331,7 @@ func (tc *TelemetryController) EndSession(c *gin.Context) {
 	device.LastSeen = time.Now()
 	if err := tc.DB.Save(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to update device last seen",
+			Message: "Failed to update device last seen",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -353,7 +353,7 @@ func (tc *TelemetryController) EndSession(c *gin.Context) {
 	}
 	if err := tc.DB.Create(&event).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to record event",
+			Message: "Failed to record event",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -385,7 +385,7 @@ func (tc *TelemetryController) RecordInstall(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Error: "Project not found",
+			Message: "Project not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -395,7 +395,7 @@ func (tc *TelemetryController) RecordInstall(c *gin.Context) {
 	var request dtos.RecordInstallRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Invalid request",
+			Message: "Invalid request",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -405,7 +405,7 @@ func (tc *TelemetryController) RecordInstall(c *gin.Context) {
 	var device models.Device
 	if err := tc.DB.Where("id = ? AND project_id = ?", request.DeviceID, projectID).First(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Device not found or doesn't belong to this project",
+			Message: "Device not found or doesn't belong to this project",
 		}
 		c.JSON(http.StatusBadRequest, response)
 		return
@@ -415,7 +415,7 @@ func (tc *TelemetryController) RecordInstall(c *gin.Context) {
 	device.LastSeen = time.Now()
 	if err := tc.DB.Save(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to update device last seen",
+			Message: "Failed to update device last seen",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -434,7 +434,7 @@ func (tc *TelemetryController) RecordInstall(c *gin.Context) {
 
 	if err := tc.DB.Create(&event).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Error: "Failed to record installation",
+			Message: "Failed to record installation",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
