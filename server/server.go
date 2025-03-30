@@ -104,6 +104,7 @@ func (s *Server) setupRoutes() {
 	deviceController := controllers.NewDeviceController(s.DB)
 	healthController := controllers.NewHealthController(s.DB)
 	projectController := controllers.NewProjectController(s.DB)
+	sessionController := controllers.NewSessionController(s.DB)
 	telemetryController := controllers.NewTelemetryController(s.DB)
 	userController := controllers.NewUserController(s.DB)
 
@@ -162,6 +163,25 @@ func (s *Server) setupRoutes() {
 		}
 	}
 
+	// Session routes
+	sessions := v1.Group("/sessions")
+	{
+		apiSessions := sessions.Group("")
+		apiSessions.Use(middleware.ApiKeyMiddleware(s.DB))
+		{
+			apiSessions.POST("/start", sessionController.BeginSession)
+			apiSessions.POST("/end", sessionController.FinishSession)
+		}
+
+		authSessions := sessions.Group("")
+		authSessions.Use(middleware.AuthMiddleware(s.DB))
+		{
+			authSessions.GET("", sessionController.GetAllSessions)
+			authSessions.GET("/project/:id", sessionController.GetProjectSessions)
+			authSessions.GET("/device/:id", sessionController.GetDeviceSessions)
+		}
+	}
+
 	// Telemetry Collection routes (API key required)
 	telemetry := v1.Group("/telemetry")
 	telemetry.Use(middleware.ApiKeyMiddleware(s.DB))
@@ -169,10 +189,6 @@ func (s *Server) setupRoutes() {
 		// Events
 		telemetry.POST("/events", telemetryController.RecordEvent)
 		telemetry.POST("/events/batch", telemetryController.RecordEvents)
-
-		// Sessions
-		telemetry.POST("/session/start", telemetryController.StartSession)
-		telemetry.POST("/session/end", telemetryController.EndSession)
 
 		// Acquisition
 		telemetry.POST("/install", telemetryController.RecordInstall)

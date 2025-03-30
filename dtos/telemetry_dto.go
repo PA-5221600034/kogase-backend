@@ -31,28 +31,6 @@ type RecordEventsResponse struct {
 	Count   int    `json:"count"`
 }
 
-// StartSessionRequest represents a start session request
-type StartSessionRequest struct {
-	DeviceID  uuid.UUID  `json:"device_id" binding:"required"`
-	Timestamp *time.Time `json:"timestamp"`
-}
-
-// StartSessionResponse represents a start session response
-type StartSessionResponse struct {
-	Message string `json:"message"`
-}
-
-// EndSessionRequest represents an end session request
-type EndSessionRequest struct {
-	DeviceID  uuid.UUID  `json:"device_id" binding:"required"`
-	Timestamp *time.Time `json:"timestamp"`
-}
-
-// EndSessionResponse represents an end session response
-type EndSessionResponse struct {
-	Message string `json:"message"`
-}
-
 // RecordInstallRequest represents an installation request
 type RecordInstallRequest struct {
 	DeviceID   uuid.UUID              `json:"device_id" binding:"required"`
