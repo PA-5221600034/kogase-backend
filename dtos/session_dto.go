@@ -7,18 +7,18 @@ import (
 )
 
 type BeginSessionRequest struct {
-	DeviceID uuid.UUID `json:"device_id" binding:"required"`
+	Identifier string `json:"identifier" binding:"required"`
 }
 
 type BeginSessionResponse struct {
-	Message string `json:"message"`
+	SessionID string `json:"session_id"`
 }
 
-type FinishSessionRequest struct {
-	DeviceID uuid.UUID `json:"device_id" binding:"required"`
+type EndSessionRequest struct {
+	SessionID string `json:"session_id" binding:"required"`
 }
 
-type FinishSessionResponse struct {
+type EndSessionResponse struct {
 	Message string `json:"message"`
 }
 
@@ -47,7 +47,7 @@ type GetAllSessionsRequestQuery struct {
 }
 
 type GetSessionResponse struct {
-	ID        uuid.UUID `json:"id"`
+	SessionID uuid.UUID `json:"session_id"`
 	ProjectID uuid.UUID `json:"project_id"`
 	DeviceID  uuid.UUID `json:"device_id"`
 	BeginAt   time.Time `json:"begin_at"`

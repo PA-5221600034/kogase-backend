@@ -118,9 +118,10 @@ func (uc *UserController) GetUser(c *gin.Context) {
 
 	// Create response DTO
 	response := dtos.GetUserResponseDetail{
-		ID:    user.ID,
-		Email: user.Email,
-		Name:  user.Name,
+		UserID:   user.ID,
+		Email:    user.Email,
+		Name:     user.Name,
+		Projects: user.Projects,
 	}
 
 	// Return user
@@ -154,9 +155,9 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 	}
 	for i, user := range users {
 		response.Users[i] = dtos.GetUserResponse{
-			ID:    user.ID,
-			Email: user.Email,
-			Name:  user.Name,
+			UserID: user.ID,
+			Email:  user.Email,
+			Name:   user.Name,
 		}
 	}
 

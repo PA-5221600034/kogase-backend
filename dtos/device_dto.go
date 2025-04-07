@@ -6,22 +6,17 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreateDeviceRequest represents a request to register or update a device
-type CreateDeviceRequest struct {
+// CreateOrUpdateDeviceRequest represents a request to register or update a device
+type CreateOrUpdateDeviceRequest struct {
 	Identifier      string `json:"identifier" binding:"required"`
 	Platform        string `json:"platform" binding:"required"`
 	PlatformVersion string `json:"platform_version" binding:"required"`
 	AppVersion      string `json:"app_version" binding:"required"`
 }
 
-// CreateDeviceResponse represents a response containing device information
-type CreateDeviceResponse struct {
-	ID uuid.UUID `json:"id"`
-}
-
 // GetDeviceResponse represents a response containing device information
 type GetDeviceResponse struct {
-	ID              uuid.UUID `json:"id"`
+	DeviceID        uuid.UUID `json:"device_id"`
 	Identifier      string    `json:"identifier"`
 	Platform        string    `json:"platform"`
 	PlatformVersion string    `json:"platform_version"`
@@ -57,9 +52,8 @@ type UpdateDeviceRequest struct {
 	AppVersion      string `json:"app_version,omitempty"`
 }
 
-// UpdateDeviceResponse represent a response for a device update
-type UpdateDeviceResponse struct {
-	ID              uuid.UUID `json:"id"`
+type CreateOrUpdateDeviceResponse struct {
+	DeviceID        uuid.UUID `json:"device_id"`
 	Identifier      string    `json:"identifier"`
 	Platform        string    `json:"platform"`
 	PlatformVersion string    `json:"platform_version"`

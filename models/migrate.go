@@ -37,6 +37,12 @@ func MigrateDB(db *gorm.DB) error {
 		return err
 	}
 
+	err = db.AutoMigrate(&Session{})
+	if err != nil {
+		log.Printf("Failed to migrate Session table: %v", err)
+		return err
+	}
+
 	err = db.AutoMigrate(&Event{})
 	if err != nil {
 		log.Printf("Failed to migrate Event table: %v", err)

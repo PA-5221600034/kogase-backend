@@ -20,7 +20,7 @@ type CreateUserResponse struct {
 
 // GetUserResponseDetail represents the response for getting a user
 type GetUserResponseDetail struct {
-	ID       uuid.UUID        `json:"id"`
+	UserID   uuid.UUID        `json:"user_id"`
 	Email    string           `json:"email"`
 	Name     string           `json:"name"`
 	Projects []models.Project `json:"projects"`
@@ -28,9 +28,9 @@ type GetUserResponseDetail struct {
 
 // GetUserResponse represents the response for getting a user
 type GetUserResponse struct {
-	ID    uuid.UUID `json:"id"`
-	Email string    `json:"email"`
-	Name  string    `json:"name"`
+	UserID uuid.UUID `json:"user_id"`
+	Email  string    `json:"email"`
+	Name   string    `json:"name"`
 }
 
 // GetUsersResponse represents the response for getting all users

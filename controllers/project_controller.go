@@ -73,10 +73,10 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 
 	// Create response DTO
 	response := dtos.CreateProjectResponse{
-		ID:      project.ID,
-		Name:    project.Name,
-		ApiKey:  project.ApiKey,
-		OwnerID: project.OwnerID,
+		ProjectID: project.ID,
+		Name:      project.Name,
+		ApiKey:    project.ApiKey,
+		OwnerID:   project.OwnerID,
 	}
 
 	// Return response
@@ -138,12 +138,12 @@ func (pc *ProjectController) GetProject(c *gin.Context) {
 
 	// Create response DTO
 	response := dtos.GetProjectResponseDetail{
-		ID:      project.ID,
-		Name:    project.Name,
-		ApiKey:  project.ApiKey,
-		OwnerID: project.OwnerID,
-		Devices: project.Devices,
-		Events:  project.Events,
+		ProjectID: project.ID,
+		Name:      project.Name,
+		ApiKey:    project.ApiKey,
+		OwnerID:   project.OwnerID,
+		Devices:   project.Devices,
+		Events:    project.Events,
 	}
 
 	// Return response
@@ -187,9 +187,9 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 	}
 	for i, project := range projects {
 		response.Projects[i] = dtos.GetProjectResponse{
-			ID:     project.ID,
-			Name:   project.Name,
-			ApiKey: project.ApiKey,
+			ProjectID: project.ID,
+			Name:      project.Name,
+			ApiKey:    project.ApiKey,
 		}
 	}
 
@@ -278,10 +278,10 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 
 	// Create response DTO
 	response := dtos.UpdateProjectResponse{
-		ID:      project.ID,
-		Name:    project.Name,
-		ApiKey:  project.ApiKey,
-		OwnerID: project.OwnerID,
+		ProjectID: project.ID,
+		Name:      project.Name,
+		ApiKey:    project.ApiKey,
+		OwnerID:   project.OwnerID,
 	}
 
 	// Return response
@@ -397,12 +397,12 @@ func (pc *ProjectController) GetProjectWithApiKey(c *gin.Context) {
 
 	// Create response DTO
 	response := dtos.GetProjectResponseDetail{
-		ID:      project.ID,
-		Name:    project.Name,
-		ApiKey:  project.ApiKey,
-		OwnerID: project.OwnerID,
-		Devices: project.Devices,
-		Events:  project.Events,
+		ProjectID: project.ID,
+		Name:      project.Name,
+		ApiKey:    project.ApiKey,
+		OwnerID:   project.OwnerID,
+		Devices:   project.Devices,
+		Events:    project.Events,
 	}
 
 	// Return response
@@ -478,10 +478,10 @@ func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
 
 	// Create response DTO
 	response := dtos.GetProjectResponse{
-		ID:      project.ID,
-		Name:    project.Name,
-		ApiKey:  project.ApiKey,
-		OwnerID: project.OwnerID,
+		ProjectID: project.ID,
+		Name:      project.Name,
+		ApiKey:    project.ApiKey,
+		OwnerID:   project.OwnerID,
 	}
 
 	// Return response

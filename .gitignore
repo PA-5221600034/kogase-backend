@@ -40,6 +40,8 @@ go.work
 /build
 /bin
 
+/tmp
+
 # Debug files
 debug
 

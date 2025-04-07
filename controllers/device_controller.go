@@ -22,7 +22,7 @@ func NewDeviceController(db *gorm.DB) *DeviceController {
 	return &DeviceController{DB: db}
 }
 
-// CreateDevice registers a new device or updates an existing one
+// CreateOrUpdateDevice registers a new device or updates an existing one
 // @Summary Register device
 // @Description Register a new device or update an existing one
 // @Tags devices
@@ -33,7 +33,7 @@ func NewDeviceController(db *gorm.DB) *DeviceController {
 // @Success 200 {object} dtos.DeviceResponse
 // @Failure 400 {object} map[string]string
 // @Router /api/v1/devices/register [post]
-func (dc *DeviceController) CreateDevice(c *gin.Context) {
+func (dc *DeviceController) CreateOrUpdateDevice(c *gin.Context) {
 	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
@@ -45,7 +45,7 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 	}
 
 	// Bind request body
-	var request dtos.CreateDeviceRequest
+	var request dtos.CreateOrUpdateDeviceRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Invalid request",
@@ -56,7 +56,7 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 
 	// Try to find the device
 	var device models.Device
-	result := dc.DB.Where("project_id = ? AND machine_code = ?", projectID, request.Identifier).First(&device)
+	result := dc.DB.Where("project_id = ? AND identifier = ?", projectID, request.Identifier).First(&device)
 
 	// Client IP address
 	ipAddress := c.ClientIP()
@@ -95,8 +95,16 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 		}
 
 		// Create response DTO
-		response := dtos.CreateDeviceResponse{
-			ID: device.ID,
+		response := dtos.CreateOrUpdateDeviceResponse{
+			DeviceID:        device.ID,
+			Identifier:      device.Identifier,
+			Platform:        device.Platform,
+			PlatformVersion: device.PlatformVersion,
+			AppVersion:      device.AppVersion,
+			FirstSeen:       device.FirstSeen,
+			LastSeen:        device.LastSeen,
+			IpAddress:       device.IpAddress,
+			Country:         device.Country,
 		}
 
 		// Return response
@@ -134,9 +142,34 @@ func (dc *DeviceController) CreateDevice(c *gin.Context) {
 		return
 	}
 
+	// Record install event
+	event := models.Event{
+		ProjectID:  projectID.(uuid.UUID),
+		DeviceID:   newDevice.ID,
+		EventType:  "predefined",
+		EventName:  "install",
+		Timestamp:  time.Now(),
+		ReceivedAt: time.Now(),
+	}
+	if err := dc.DB.Create(&event).Error; err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Failed to record install event",
+		}
+		c.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
 	// Create response DTO
-	response := dtos.CreateDeviceResponse{
-		ID: newDevice.ID,
+	response := dtos.CreateOrUpdateDeviceResponse{
+		DeviceID:        newDevice.ID,
+		Identifier:      newDevice.Identifier,
+		Platform:        newDevice.Platform,
+		PlatformVersion: newDevice.PlatformVersion,
+		AppVersion:      newDevice.AppVersion,
+		FirstSeen:       newDevice.FirstSeen,
+		LastSeen:        newDevice.LastSeen,
+		IpAddress:       newDevice.IpAddress,
+		Country:         newDevice.Country,
 	}
 
 	// Return response
@@ -187,7 +220,7 @@ func (dc *DeviceController) GetDevice(c *gin.Context) {
 
 	// Create response DTO
 	response := dtos.GetDeviceResponse{
-		ID:              device.ID,
+		DeviceID:        device.ID,
 		Identifier:      device.Identifier,
 		Platform:        device.Platform,
 		PlatformVersion: device.PlatformVersion,
@@ -292,7 +325,7 @@ func (dc *DeviceController) GetDevices(c *gin.Context) {
 	deviceResponses := make([]dtos.GetDeviceResponse, len(devices))
 	for i, device := range devices {
 		deviceResponses[i] = dtos.GetDeviceResponse{
-			ID:              device.ID,
+			DeviceID:        device.ID,
 			Identifier:      device.Identifier,
 			Platform:        device.Platform,
 			PlatformVersion: device.PlatformVersion,
@@ -391,7 +424,7 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 
 	// Create response DTO
 	response := dtos.GetDeviceResponse{
-		ID:              device.ID,
+		DeviceID:        device.ID,
 		Identifier:      device.Identifier,
 		Platform:        device.Platform,
 		PlatformVersion: device.PlatformVersion,

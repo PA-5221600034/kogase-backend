@@ -2,16 +2,14 @@ package dtos
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // RecordEventRequest represents a telemetry event request
 type RecordEventRequest struct {
-	DeviceID   uuid.UUID              `json:"device_id" binding:"required"`
+	Identifier string                 `json:"identifier" binding:"required"`
 	EventType  string                 `json:"event_type" binding:"required"`
 	EventName  string                 `json:"event_name" binding:"required"`
-	Parameters map[string]interface{} `json:"parameters"`
+	Payloads   map[string]interface{} `json:"payloads"`
 	Timestamp  *time.Time             `json:"timestamp"`
 }
 
@@ -29,16 +27,4 @@ type RecordEventsRequest struct {
 type RecordEventsResponse struct {
 	Message string `json:"message"`
 	Count   int    `json:"count"`
-}
-
-// RecordInstallRequest represents an installation request
-type RecordInstallRequest struct {
-	DeviceID   uuid.UUID              `json:"device_id" binding:"required"`
-	Parameters map[string]interface{} `json:"parameters"`
-	Timestamp  *time.Time             `json:"timestamp"`
-}
-
-// RecordInstallResponse represents an installation response
-type RecordInstallResponse struct {
-	Message string `json:"message"`
 }

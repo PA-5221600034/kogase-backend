@@ -42,9 +42,9 @@ func (sc *SessionController) BeginSession(c *gin.Context) {
 
 	// Validate device exists
 	device := models.Device{
-		ID: request.DeviceID,
+		Identifier: request.Identifier,
 	}
-	if err := sc.DB.First(&device, "id = ?", request.DeviceID).Error; err != nil {
+	if err := sc.DB.First(&device, "identifier = ?", request.Identifier).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Device not found",
 		}
@@ -55,7 +55,7 @@ func (sc *SessionController) BeginSession(c *gin.Context) {
 	// Create session
 	session := models.Session{
 		ProjectID: projectID.(uuid.UUID),
-		DeviceID:  request.DeviceID,
+		DeviceID:  device.ID,
 	}
 	if err := sc.DB.Create(&session).Error; err != nil {
 		response := dtos.ErrorResponse{
@@ -67,14 +67,14 @@ func (sc *SessionController) BeginSession(c *gin.Context) {
 
 	// Return session ID
 	response := dtos.BeginSessionResponse{
-		Message: "Session begun",
+		SessionID: session.ID.String(),
 	}
 
 	// Return response
 	c.JSON(http.StatusCreated, response)
 }
 
-func (sc *SessionController) FinishSession(c *gin.Context) {
+func (sc *SessionController) EndSession(c *gin.Context) {
 	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
@@ -86,7 +86,7 @@ func (sc *SessionController) FinishSession(c *gin.Context) {
 	}
 
 	// Bind request body
-	var request dtos.FinishSessionRequest
+	var request dtos.EndSessionRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Invalid request body",
@@ -95,24 +95,12 @@ func (sc *SessionController) FinishSession(c *gin.Context) {
 		return
 	}
 
-	// Validate device exists
-	device := models.Device{
-		ID: request.DeviceID,
-	}
-	if err := sc.DB.First(&device, "id = ?", request.DeviceID).Error; err != nil {
-		response := dtos.ErrorResponse{
-			Message: "Device not found",
-		}
-		c.JSON(http.StatusNotFound, response)
-		return
-	}
-
 	// Validate session exists
 	session := models.Session{
+		ID:        uuid.MustParse(request.SessionID),
 		ProjectID: projectID.(uuid.UUID),
-		DeviceID:  request.DeviceID,
 	}
-	if err := sc.DB.First(&session, "project_id = ? AND device_id = ?", projectID.(uuid.UUID), request.DeviceID).Error; err != nil {
+	if err := sc.DB.First(&session, "id = ? AND project_id = ?", request.SessionID, projectID.(uuid.UUID)).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Session not found",
 		}
@@ -122,16 +110,17 @@ func (sc *SessionController) FinishSession(c *gin.Context) {
 
 	// Update session finish time
 	session.EndAt = time.Now()
+	session.Duration = time.Since(session.BeginAt)
 	if err := sc.DB.Save(&session).Error; err != nil {
 		response := dtos.ErrorResponse{
-			Message: "Failed to finish session",
+			Message: "Failed to end session",
 		}
 		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	// Return session ID
-	response := dtos.FinishSessionResponse{
+	response := dtos.EndSessionResponse{
 		Message: "Session ended",
 	}
 
@@ -186,7 +175,7 @@ func (sc *SessionController) GetDeviceSessions(c *gin.Context) {
 	var sessionsDTO []dtos.GetSessionResponse
 	for _, session := range sessions {
 		sessionsDTO = append(sessionsDTO, dtos.GetSessionResponse{
-			ID:        session.ID,
+			SessionID: session.ID,
 			ProjectID: session.ProjectID,
 			DeviceID:  session.DeviceID,
 			BeginAt:   session.BeginAt,
@@ -238,7 +227,7 @@ func (sc *SessionController) GetProjectSessions(c *gin.Context) {
 	var sessionsDTO []dtos.GetSessionResponse
 	for _, session := range sessions {
 		sessionsDTO = append(sessionsDTO, dtos.GetSessionResponse{
-			ID:        session.ID,
+			SessionID: session.ID,
 			ProjectID: session.ProjectID,
 			DeviceID:  session.DeviceID,
 			BeginAt:   session.BeginAt,
@@ -290,7 +279,7 @@ func (sc *SessionController) GetAllSessions(c *gin.Context) {
 	var sessionsDTO []dtos.GetSessionResponse
 	for _, session := range sessions {
 		sessionsDTO = append(sessionsDTO, dtos.GetSessionResponse{
-			ID: session.ID,
+			SessionID: session.ID,
 		})
 	}
 

@@ -14,6 +14,7 @@ type Session struct {
 	DeviceID  uuid.UUID      `json:"device_id" gorm:"type:uuid;not null"`
 	BeginAt   time.Time      `json:"begin_at" gorm:"not null"`
 	EndAt     time.Time      `json:"end_at"`
+	Duration  time.Duration  `json:"duration"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
