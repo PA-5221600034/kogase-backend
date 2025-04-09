@@ -10,34 +10,21 @@ import (
 	"gorm.io/gorm"
 )
 
-// ProjectController handles project-related endpoints
 type ProjectController struct {
 	DB *gorm.DB
 }
 
-// NewProjectController creates a new ProjectController instance
 func NewProjectController(db *gorm.DB) *ProjectController {
 	return &ProjectController{DB: db}
 }
 
-// CreateProject creates a new project
-// @Summary Create project
-// @Description Create a new project
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Param project body dtos.CreateProjectRequest true "Project details"
-// @Security BearerAuth
-// @Success 201 {object} models.Project
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Router /api/v1/projects [post]
 func (pc *ProjectController) CreateProject(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
 		var defaultAdmin models.User
-		if err := pc.DB.Where("email = ?", "admin@kogase.io").First(&defaultAdmin).Error; err != nil {
+		if err := pc.DB.Model(&models.User{}).
+			Where("email = ?", "admin@kogase.io").
+			First(&defaultAdmin).Error; err != nil {
 			response := dtos.ErrorResponse{
 				Message: "User not found",
 			}
@@ -47,7 +34,6 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 		userID = defaultAdmin.ID
 	}
 
-	// Bind request body
 	var request dtos.CreateProjectRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
@@ -57,7 +43,6 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 		return
 	}
 
-	// Create project
 	project := models.Project{
 		Name:    request.Name,
 		ApiKey:  uuid.New().String(),
@@ -71,8 +56,7 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 		return
 	}
 
-	// Create response DTO
-	response := dtos.CreateProjectResponse{
+	resultResponse := dtos.CreateProjectResponse{
 		ProjectID: project.ID,
 		Name:      project.Name,
 		ApiKey:    project.ApiKey,
@@ -83,93 +67,10 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 		},
 	}
 
-	// Return response
-	c.JSON(http.StatusCreated, response)
+	c.JSON(http.StatusCreated, resultResponse)
 }
 
-// GetProject returns a specific project by ID
-// @Summary Get project
-// @Description Get a specific project by ID
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Param id path string true "Project ID"
-// @Security BearerAuth
-// @Success 200 {object} models.Project
-// @Failure 401 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Router /api/v1/projects/{id} [get]
-func (pc *ProjectController) GetProject(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
-		response := dtos.ErrorResponse{
-			Message: "User not found",
-		}
-		c.JSON(http.StatusUnauthorized, response)
-		return
-	}
-
-	// Get project ID from URL
-	id := c.Param("id")
-	projectID, err := uuid.Parse(id)
-	if err != nil {
-		response := dtos.ErrorResponse{
-			Message: "Invalid project ID",
-		}
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	// Get project
-	var project models.Project
-	if err := pc.DB.First(&project, "id = ?", projectID).Error; err != nil {
-		response := dtos.ErrorResponse{
-			Message: "Project not found",
-		}
-		c.JSON(http.StatusNotFound, response)
-		return
-	}
-
-	// Check if user has access to project (only owner has access)
-	if project.OwnerID != userID.(uuid.UUID) {
-		response := dtos.ErrorResponse{
-			Message: "Access denied",
-		}
-		c.JSON(http.StatusForbidden, response)
-		return
-	}
-
-	// Create response DTO
-	response := dtos.GetProjectResponseDetail{
-		ProjectID: project.ID,
-		Name:      project.Name,
-		ApiKey:    project.ApiKey,
-		Owner: dtos.OwnerDto{
-			ID:    project.Owner.ID,
-			Email: project.Owner.Email,
-			Name:  project.Owner.Name,
-		},
-		Devices: project.Devices,
-		Events:  project.Events,
-	}
-
-	// Return response
-	c.JSON(http.StatusOK, response)
-}
-
-// GetProjects returns all projects accessible by the current user
-// @Summary List projects
-// @Description Get all projects accessible by the current user
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {array} models.Project
-// @Failure 401 {object} map[string]string
-// @Router /api/v1/projects [get]
 func (pc *ProjectController) GetProjects(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
 	_, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -180,7 +81,8 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 	}
 
 	var projects []models.Project
-	if err := pc.DB.Find(&projects).Error; err != nil {
+	if err := pc.DB.Model(&models.Project{}).
+		Find(&projects).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Failed to retrieve projects",
 		}
@@ -188,12 +90,11 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 		return
 	}
 
-	// Create response DTO
-	response := dtos.GetProjectsResponse{
+	resultResponse := dtos.GetProjectsResponse{
 		Projects: make([]dtos.GetProjectResponse, len(projects)),
 	}
 	for i, project := range projects {
-		response.Projects[i] = dtos.GetProjectResponse{
+		resultResponse.Projects[i] = dtos.GetProjectResponse{
 			ProjectID: project.ID,
 			Name:      project.Name,
 			ApiKey:    project.ApiKey,
@@ -205,27 +106,10 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 		}
 	}
 
-	// Return response
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
 
-// UpdateProject updates a project
-// @Summary Update project
-// @Description Update a project's details
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Param id path string true "Project ID"
-// @Param project body dtos.UpdateProjectRequest true "Project details"
-// @Security BearerAuth
-// @Success 200 {object} models.Project
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Router /api/v1/projects/{id} [patch]
-func (pc *ProjectController) UpdateProject(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
+func (pc *ProjectController) GetProject(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -235,7 +119,6 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 		return
 	}
 
-	// Get project ID from URL
 	id := c.Param("id")
 	projectID, err := uuid.Parse(id)
 	if err != nil {
@@ -246,9 +129,10 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 		return
 	}
 
-	// Get project
 	var project models.Project
-	if err := pc.DB.First(&project, "id = ?", projectID).Error; err != nil {
+	if err := pc.DB.Model(&models.Project{}).
+		Where("id = ?", projectID).
+		First(&project).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Project not found",
 		}
@@ -256,7 +140,55 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 		return
 	}
 
-	// Bind request body
+	resultResponse := dtos.GetProjectResponseDetail{
+		GetProjectResponse: dtos.GetProjectResponse{
+			ProjectID: project.ID,
+			Name:      project.Name,
+			ApiKey:    project.ApiKey,
+			Owner: dtos.OwnerDto{
+				ID:    project.Owner.ID,
+				Email: project.Owner.Email,
+				Name:  project.Owner.Name,
+			},
+		},
+		Devices: project.Devices,
+		Events:  project.Events,
+	}
+
+	c.JSON(http.StatusOK, resultResponse)
+}
+
+func (pc *ProjectController) UpdateProject(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		response := dtos.ErrorResponse{
+			Message: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	id := c.Param("id")
+	projectID, err := uuid.Parse(id)
+	if err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Invalid project ID",
+		}
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	var project models.Project
+	if err := pc.DB.Model(&models.Project{}).
+		Where("id = ?", projectID).
+		First(&project).Error; err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Project not found",
+		}
+		c.JSON(http.StatusNotFound, response)
+		return
+	}
+
 	var updateReq dtos.UpdateProjectRequest
 	if err := c.ShouldBindJSON(&updateReq); err != nil {
 		response := dtos.ErrorResponse{
@@ -266,7 +198,6 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 		return
 	}
 
-	// Update project
 	if updateReq.Name != "" {
 		project.Name = updateReq.Name
 	}
@@ -279,8 +210,7 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 		return
 	}
 
-	// Create response DTO
-	response := dtos.UpdateProjectResponse{
+	resultResponse := dtos.UpdateProjectResponse{
 		ProjectID: project.ID,
 		Name:      project.Name,
 		ApiKey:    project.ApiKey,
@@ -291,25 +221,10 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 		},
 	}
 
-	// Return response
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
 
-// DeleteProject deletes a project
-// @Summary Delete project
-// @Description Delete a project
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Param id path string true "Project ID"
-// @Security BearerAuth
-// @Success 200 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Router /api/v1/projects/{id} [delete]
 func (pc *ProjectController) DeleteProject(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
 	_, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -319,7 +234,6 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 		return
 	}
 
-	// Get project ID from URL
 	id := c.Param("id")
 	projectID, err := uuid.Parse(id)
 	if err != nil {
@@ -330,9 +244,10 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 		return
 	}
 
-	// Get project
 	var project models.Project
-	if err := pc.DB.First(&project, "id = ?", projectID).Error; err != nil {
+	if err := pc.DB.Model(&models.Project{}).
+		Where("id = ?", projectID).
+		First(&project).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Project not found",
 		}
@@ -340,7 +255,6 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 		return
 	}
 
-	// Delete project
 	if err := pc.DB.Delete(&project).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Failed to delete project",
@@ -349,31 +263,69 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 		return
 	}
 
-	// Create response DTO
-	response := dtos.DeleteProjectResponse{
+	resultResponse := dtos.DeleteProjectResponse{
 		Message: "Project deleted successfully",
 	}
 
-	// Return response
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
 
-// GetProjectWithApiKey returns the project through API key
-// @Summary Get project by API key
-// @Description Get project by API key
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Param api_key path string true "Project API Key"
-// @Security BearerAuth
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Router /api/v1/projects/apikey [get]
+func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		response := dtos.ErrorResponse{
+			Message: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	id := c.Param("id")
+	projectID, err := uuid.Parse(id)
+	if err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Invalid project ID",
+		}
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	var project models.Project
+	if err := pc.DB.Model(&models.Project{}).
+		Where("id = ?", projectID).
+		First(&project).Error; err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Project not found",
+		}
+		c.JSON(http.StatusNotFound, response)
+		return
+	}
+
+	project.ApiKey = uuid.New().String()
+
+	if err := pc.DB.Save(&project).Error; err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Failed to regenerate API key",
+		}
+		c.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	resultResponse := dtos.GetProjectResponse{
+		ProjectID: project.ID,
+		Name:      project.Name,
+		ApiKey:    project.ApiKey,
+		Owner: dtos.OwnerDto{
+			ID:    project.Owner.ID,
+			Email: project.Owner.Email,
+			Name:  project.Owner.Name,
+		},
+	}
+
+	c.JSON(http.StatusOK, resultResponse)
+}
+
 func (pc *ProjectController) GetProjectWithApiKey(c *gin.Context) {
-	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -383,9 +335,10 @@ func (pc *ProjectController) GetProjectWithApiKey(c *gin.Context) {
 		return
 	}
 
-	// Get project
 	var project models.Project
-	if err := pc.DB.First(&project, "id = ?", projectID).Error; err != nil {
+	if err := pc.DB.Model(&models.Project{}).
+		Where("id = ?", projectID).
+		First(&project).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Project not found",
 		}
@@ -393,94 +346,20 @@ func (pc *ProjectController) GetProjectWithApiKey(c *gin.Context) {
 		return
 	}
 
-	// Create response DTO
-	response := dtos.GetProjectResponseDetail{
-		ProjectID: project.ID,
-		Name:      project.Name,
-		ApiKey:    project.ApiKey,
-		Owner: dtos.OwnerDto{
-			ID:    project.Owner.ID,
-			Email: project.Owner.Email,
-			Name:  project.Owner.Name,
+	resultResponse := dtos.GetProjectResponseDetail{
+		GetProjectResponse: dtos.GetProjectResponse{
+			ProjectID: project.ID,
+			Name:      project.Name,
+			ApiKey:    project.ApiKey,
+			Owner: dtos.OwnerDto{
+				ID:    project.Owner.ID,
+				Email: project.Owner.Email,
+				Name:  project.Owner.Name,
+			},
 		},
 		Devices: project.Devices,
 		Events:  project.Events,
 	}
 
-	// Return response
-	c.JSON(http.StatusOK, response)
-}
-
-// RegenerateApiKey regenerates the API key for a project
-// @Summary Regenerate API key
-// @Description Regenerate the API key for a project
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Param id path string true "Project ID"
-// @Security BearerAuth
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Router /api/v1/projects/{id}/apikey [post]
-func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
-	_, exists := c.Get("user_id")
-	if !exists {
-		response := dtos.ErrorResponse{
-			Message: "User not found",
-		}
-		c.JSON(http.StatusUnauthorized, response)
-		return
-	}
-
-	// Get project ID from URL
-	id := c.Param("id")
-	projectID, err := uuid.Parse(id)
-	if err != nil {
-		response := dtos.ErrorResponse{
-			Message: "Invalid project ID",
-		}
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	// Get project
-	var project models.Project
-	if err := pc.DB.First(&project, "id = ?", projectID).Error; err != nil {
-		response := dtos.ErrorResponse{
-			Message: "Project not found",
-		}
-		c.JSON(http.StatusNotFound, response)
-		return
-	}
-
-	// Generate new API key
-	project.ApiKey = uuid.New().String()
-
-	// Save project
-	if err := pc.DB.Save(&project).Error; err != nil {
-		response := dtos.ErrorResponse{
-			Message: "Failed to regenerate API key",
-		}
-		c.JSON(http.StatusInternalServerError, response)
-		return
-	}
-
-	// Create response DTO
-	response := dtos.GetProjectResponse{
-		ProjectID: project.ID,
-		Name:      project.Name,
-		ApiKey:    project.ApiKey,
-		Owner: dtos.OwnerDto{
-			ID:    project.Owner.ID,
-			Email: project.Owner.Email,
-			Name:  project.Owner.Name,
-		},
-	}
-
-	// Return response
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }

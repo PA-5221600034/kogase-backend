@@ -130,14 +130,12 @@ func (s *Server) setupRoutes() {
 	// Device routes
 	devices := v1.Group("/devices")
 	{
-		// API key routes (for game clients)
 		apiKeyDevices := devices.Group("")
 		apiKeyDevices.Use(middleware.ApiKeyMiddleware(s.DB))
 		{
 			apiKeyDevices.POST("", deviceController.CreateOrUpdateDevice)
 		}
 
-		// Auth routes (for dashboard)
 		authDevices := devices.Group("")
 		authDevices.Use(middleware.AuthMiddleware(s.DB))
 		{
@@ -164,18 +162,19 @@ func (s *Server) setupRoutes() {
 	// Project routes
 	projects := v1.Group("/projects")
 	{
-		projects.GET("/apikey", middleware.ApiKeyMiddleware(s.DB), projectController.GetProjectWithApiKey)
 		projects.POST("", projectController.CreateProject)
 
 		authProjects := projects.Group("")
 		authProjects.Use(middleware.AuthMiddleware(s.DB))
 		{
-			authProjects.GET("/:id", projectController.GetProject)
 			authProjects.GET("", projectController.GetProjects)
+			authProjects.GET("/:id", projectController.GetProject)
 			authProjects.PATCH("/:id", projectController.UpdateProject)
 			authProjects.DELETE("/:id", projectController.DeleteProject)
 			authProjects.POST("/:id/apikey", projectController.RegenerateApiKey)
 		}
+
+		projects.GET("/apikey", middleware.ApiKeyMiddleware(s.DB), projectController.GetProjectWithApiKey)
 	}
 
 	// Session routes

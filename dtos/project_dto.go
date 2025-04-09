@@ -16,13 +16,8 @@ type CreateProjectResponse struct {
 	Owner     OwnerDto  `json:"owner"`
 }
 
-type GetProjectResponseDetail struct {
-	ProjectID uuid.UUID       `json:"project_id"`
-	Name      string          `json:"name"`
-	ApiKey    string          `json:"api_key"`
-	Owner     OwnerDto        `json:"owner"`
-	Devices   []models.Device `json:"devices"`
-	Events    []models.Event  `json:"events"`
+type GetProjectsResponse struct {
+	Projects []GetProjectResponse `json:"projects"`
 }
 
 type GetProjectResponse struct {
@@ -32,8 +27,10 @@ type GetProjectResponse struct {
 	Owner     OwnerDto  `json:"owner"`
 }
 
-type GetProjectsResponse struct {
-	Projects []GetProjectResponse `json:"projects"`
+type GetProjectResponseDetail struct {
+	GetProjectResponse
+	Devices []models.Device `json:"devices"`
+	Events  []models.Event  `json:"events"`
 }
 
 type UpdateProjectRequest struct {

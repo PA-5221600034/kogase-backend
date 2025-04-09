@@ -6,7 +6,7 @@ package docs
 // Security schemes defined here are used across the API
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
-// @name X-API-Key
+// @name X-Kogase-API-Key
 
 // @securityDefinitions.apikey BearerAuth
 // @in header
