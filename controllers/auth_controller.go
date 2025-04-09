@@ -10,31 +10,17 @@ import (
 	"gorm.io/gorm"
 )
 
-// AuthController handles authentication-related endpoints
 type AuthController struct {
 	DB *gorm.DB
 }
 
-// NewAuthController creates a new AuthController instance
 func NewAuthController(db *gorm.DB) *AuthController {
 	return &AuthController{DB: db}
 }
 
-// Login authenticates a user and returns a JWT token
-// @Summary Login user
-// @Description Authenticate user and receive JWT token
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param credentials body dtos.LoginRequest true "Login credentials"
-// @Success 200 {object} dtos.LoginResponse
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Router /api/v1/auth/login [post]
 func (ac *AuthController) Login(c *gin.Context) {
-	// Bind request body
-	var loginReq dtos.LoginRequest
-	if err := c.ShouldBindJSON(&loginReq); err != nil {
+	var request dtos.LoginRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Invalid request",
 		}
@@ -42,9 +28,10 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// Find user by email
 	var user models.User
-	if err := ac.DB.Where("email = ?", loginReq.Email).First(&user).Error; err != nil {
+	if err := ac.DB.Model(&models.User{}).
+		Where("email = ?", request.Email).
+		First(&user).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Invalid credentials",
 		}
@@ -52,8 +39,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// Verify password
-	if !utils.CheckPasswordHash(loginReq.Password, user.Password) {
+	if !utils.CheckPasswordHash(request.Password, user.Password) {
 		response := dtos.ErrorResponse{
 			Message: "Invalid credentials",
 		}
@@ -61,7 +47,6 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// Create token - use new utility function instead of local helper
 	token, expiresAt, err := utils.CreateToken(user)
 	if err != nil {
 		response := dtos.ErrorResponse{
@@ -71,7 +56,6 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// Save token to database
 	authToken := models.AuthToken{
 		UserID:    user.ID,
 		Token:     token,
@@ -85,27 +69,15 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// Create response
-	response := dtos.LoginResponse{
+	resultResponse := dtos.LoginResponse{
 		Token:     token,
 		ExpiresAt: expiresAt,
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
 
-// Me returns the current user information
-// @Summary Get current user
-// @Description Get current authenticated user information
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} dtos.MeResponse
-// @Failure 401 {object} map[string]string
-// @Router /api/v1/auth/me [get]
 func (ac *AuthController) Me(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -115,7 +87,6 @@ func (ac *AuthController) Me(c *gin.Context) {
 		return
 	}
 
-	// Get user
 	var user models.User
 	if err := ac.DB.First(&user, "id = ?", userID).Error; err != nil {
 		response := dtos.ErrorResponse{
@@ -125,8 +96,7 @@ func (ac *AuthController) Me(c *gin.Context) {
 		return
 	}
 
-	// Create response using MeResponse DTO
-	response := dtos.MeResponse{
+	resultResponse := dtos.MeResponse{
 		ID:        user.ID,
 		Email:     user.Email,
 		Name:      user.Name,
@@ -134,22 +104,10 @@ func (ac *AuthController) Me(c *gin.Context) {
 		UpdatedAt: user.UpdatedAt,
 	}
 
-	// Return response
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
 
-// Logout invalidates the current token
-// @Summary Logout user
-// @Description Invalidate current JWT token
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} dtos.LogoutResponse
-// @Failure 401 {object} map[string]string
-// @Router /api/v1/auth/logout [post]
 func (ac *AuthController) Logout(c *gin.Context) {
-	// Get auth header
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		response := dtos.ErrorResponse{
@@ -159,16 +117,15 @@ func (ac *AuthController) Logout(c *gin.Context) {
 		return
 	}
 
-	// Extract token
-	tokenString := authHeader[7:] // Remove "Bearer " prefix
+	tokenString := authHeader[7:]
 
-	// Delete token from database
-	ac.DB.Where("token = ?", tokenString).Delete(&models.AuthToken{})
+	ac.DB.Model(&models.AuthToken{}).
+		Where("token = ?", tokenString).
+		Delete(&models.AuthToken{})
 
-	// Create response using LogoutResponse DTO
-	response := dtos.LogoutResponse{
+	resultResponse := dtos.LogoutResponse{
 		Message: "Logged out successfully",
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
