@@ -26,6 +26,19 @@ type CreateOrUpdateDeviceResponse struct {
 	Country         string    `json:"country"`
 }
 
+type GetDevicesRequestQuery struct {
+	Platform string `form:"platform" json:"platform,omitempty"`
+	Limit    int    `form:"limit,default=20" json:"limit,omitempty"`
+	Offset   int    `form:"offset,default=0" json:"offset,omitempty"`
+}
+
+type GetDevicesResponse struct {
+	Devices    []GetDeviceResponse `json:"devices"`
+	TotalCount int                 `json:"total_count"`
+	Limit      int                 `json:"limit"`
+	Offset     int                 `json:"offset"`
+}
+
 type GetDeviceResponse struct {
 	DeviceID        uuid.UUID `json:"device_id"`
 	Identifier      string    `json:"identifier"`
@@ -41,19 +54,6 @@ type GetDeviceResponse struct {
 type GetDeviceResponseDetail struct {
 	GetDeviceResponse
 	Events []models.Event `json:"events"`
-}
-
-type GetDevicesRequestQuery struct {
-	Platform string `form:"platform" json:"platform,omitempty"`
-	Limit    int    `form:"limit,default=20" json:"limit,omitempty"`
-	Offset   int    `form:"offset,default=0" json:"offset,omitempty"`
-}
-
-type GetDevicesResponse struct {
-	Devices    []GetDeviceResponse `json:"devices"`
-	TotalCount int                 `json:"total_count"`
-	Limit      int                 `json:"limit"`
-	Offset     int                 `json:"offset"`
 }
 
 type DeleteDeviceResponse struct {

@@ -145,51 +145,6 @@ func (dc *DeviceController) CreateOrUpdateDevice(c *gin.Context) {
 	c.JSON(http.StatusCreated, resultResponse)
 }
 
-func (dc *DeviceController) GetDevice(c *gin.Context) {
-	_, exists := c.Get("user_id")
-	if !exists {
-		response := dtos.ErrorResponse{
-			Message: "User not found",
-		}
-		c.JSON(http.StatusUnauthorized, response)
-		return
-	}
-
-	deviceID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		response := dtos.ErrorResponse{
-			Message: "Invalid device ID",
-		}
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	var device models.Device
-	if err := dc.DB.Model(&models.Device{}).
-		Where("id = ?", deviceID).
-		First(&device).Error; err != nil {
-		response := dtos.ErrorResponse{
-			Message: "Device not found",
-		}
-		c.JSON(http.StatusNotFound, response)
-		return
-	}
-
-	resultResponse := dtos.GetDeviceResponse{
-		DeviceID:        device.ID,
-		Identifier:      device.Identifier,
-		Platform:        device.Platform,
-		PlatformVersion: device.PlatformVersion,
-		AppVersion:      device.AppVersion,
-		FirstSeen:       device.FirstSeen,
-		LastSeen:        device.LastSeen,
-		IpAddress:       device.IpAddress,
-		Country:         device.Country,
-	}
-
-	c.JSON(http.StatusOK, resultResponse)
-}
-
 func (dc *DeviceController) GetDevices(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -266,6 +221,51 @@ func (dc *DeviceController) GetDevices(c *gin.Context) {
 		TotalCount: int(totalCount),
 		Limit:      query.Limit,
 		Offset:     query.Offset,
+	}
+
+	c.JSON(http.StatusOK, resultResponse)
+}
+
+func (dc *DeviceController) GetDevice(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		response := dtos.ErrorResponse{
+			Message: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	deviceID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Invalid device ID",
+		}
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	var device models.Device
+	if err := dc.DB.Model(&models.Device{}).
+		Where("id = ?", deviceID).
+		First(&device).Error; err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Device not found",
+		}
+		c.JSON(http.StatusNotFound, response)
+		return
+	}
+
+	resultResponse := dtos.GetDeviceResponse{
+		DeviceID:        device.ID,
+		Identifier:      device.Identifier,
+		Platform:        device.Platform,
+		PlatformVersion: device.PlatformVersion,
+		AppVersion:      device.AppVersion,
+		FirstSeen:       device.FirstSeen,
+		LastSeen:        device.LastSeen,
+		IpAddress:       device.IpAddress,
+		Country:         device.Country,
 	}
 
 	c.JSON(http.StatusOK, resultResponse)
