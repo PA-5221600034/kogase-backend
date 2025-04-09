@@ -30,6 +30,13 @@ type GetSessionsRequestQuery struct {
 	Offset    int       `form:"offset,default=0" json:"offset,omitempty"`
 }
 
+type GetSessionsResponse struct {
+	Sessions []GetSessionResponse `json:"sessions"`
+	Total    int64                `json:"total"`
+	Limit    int                  `json:"limit"`
+	Offset   int                  `json:"offset"`
+}
+
 type GetSessionRequest struct {
 	SessionID uuid.UUID `json:"session_id" binding:"required"`
 }
@@ -39,11 +46,4 @@ type GetSessionResponse struct {
 	BeginAt   time.Time     `json:"begin_at"`
 	EndAt     time.Time     `json:"end_at"`
 	Duration  time.Duration `json:"duration"`
-}
-
-type GetSessionsResponse struct {
-	Sessions []GetSessionResponse `json:"sessions"`
-	Total    int64                `json:"total"`
-	Limit    int                  `json:"limit"`
-	Offset   int                  `json:"offset"`
 }

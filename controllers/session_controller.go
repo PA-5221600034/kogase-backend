@@ -20,7 +20,6 @@ func NewSessionController(db *gorm.DB) *SessionController {
 }
 
 func (sc *SessionController) BeginSession(c *gin.Context) {
-	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -30,7 +29,6 @@ func (sc *SessionController) BeginSession(c *gin.Context) {
 		return
 	}
 
-	// Bind request body
 	var request dtos.BeginSessionRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
@@ -40,11 +38,12 @@ func (sc *SessionController) BeginSession(c *gin.Context) {
 		return
 	}
 
-	// Validate device exists
 	device := models.Device{
 		Identifier: request.Identifier,
 	}
-	if err := sc.DB.First(&device, "identifier = ?", request.Identifier).Error; err != nil {
+	if err := sc.DB.Model(&models.Device{}).
+		Where("identifier = ?", request.Identifier).
+		First(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Device not found",
 		}
@@ -52,7 +51,6 @@ func (sc *SessionController) BeginSession(c *gin.Context) {
 		return
 	}
 
-	// Create session
 	session := models.Session{
 		ProjectID: projectID.(uuid.UUID),
 		DeviceID:  device.ID,
@@ -65,17 +63,14 @@ func (sc *SessionController) BeginSession(c *gin.Context) {
 		return
 	}
 
-	// Return session ID
-	response := dtos.BeginSessionResponse{
+	resultResponse := dtos.BeginSessionResponse{
 		SessionID: session.ID.String(),
 	}
 
-	// Return response
-	c.JSON(http.StatusCreated, response)
+	c.JSON(http.StatusCreated, resultResponse)
 }
 
 func (sc *SessionController) EndSession(c *gin.Context) {
-	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -85,7 +80,6 @@ func (sc *SessionController) EndSession(c *gin.Context) {
 		return
 	}
 
-	// Bind request body
 	var request dtos.EndSessionRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
@@ -95,12 +89,13 @@ func (sc *SessionController) EndSession(c *gin.Context) {
 		return
 	}
 
-	// Validate session exists
 	session := models.Session{
 		ID:        uuid.MustParse(request.SessionID),
 		ProjectID: projectID.(uuid.UUID),
 	}
-	if err := sc.DB.First(&session, "id = ? AND project_id = ?", request.SessionID, projectID.(uuid.UUID)).Error; err != nil {
+	if err := sc.DB.Model(&models.Session{}).
+		Where("id = ? AND project_id = ?", request.SessionID, projectID.(uuid.UUID)).
+		First(&session).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Session not found",
 		}
@@ -108,7 +103,6 @@ func (sc *SessionController) EndSession(c *gin.Context) {
 		return
 	}
 
-	// Update session finish time
 	session.EndAt = time.Now()
 	session.Duration = time.Since(session.BeginAt)
 	if err := sc.DB.Save(&session).Error; err != nil {
@@ -119,18 +113,15 @@ func (sc *SessionController) EndSession(c *gin.Context) {
 		return
 	}
 
-	// Return session ID
-	response := dtos.EndSessionResponse{
+	resultResponse := dtos.EndSessionResponse{
 		Message: "Session ended",
 	}
 
-	// Return response
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
 
 func (sc *SessionController) GetSessions(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
-	userID, exists := c.Get("user_id")
+	_, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
 			Message: "User not found",
@@ -139,17 +130,6 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 		return
 	}
 
-	// Get user
-	var user models.User
-	if err := sc.DB.First(&user, "id = ?", userID).Error; err != nil {
-		response := dtos.ErrorResponse{
-			Message: "User not found",
-		}
-		c.JSON(http.StatusInternalServerError, response)
-		return
-	}
-
-	// Bind request query
 	var request dtos.GetSessionsRequestQuery
 	if err := c.ShouldBindQuery(&request); err != nil {
 		response := dtos.ErrorResponse{
@@ -159,12 +139,10 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 		return
 	}
 
-	query := sc.DB
-
+	query := sc.DB.Model(&models.Session{})
 	if request.ProjectID != uuid.Nil {
 		query = query.Where("project_id = ?", request.ProjectID)
 	}
-
 	if !request.FromDate.IsZero() {
 		fromDate := time.Date(
 			request.FromDate.Year(),
@@ -175,7 +153,6 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 		)
 		query = query.Where("begin_at >= ?", fromDate)
 	}
-
 	if !request.ToDate.IsZero() {
 		toDate := time.Date(
 			request.ToDate.Year(),
@@ -187,10 +164,8 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 		query = query.Where("end_at <= ?", toDate)
 	}
 
-	// Pagination
 	query = query.Limit(request.Limit).Offset(request.Offset)
 
-	// Order
 	query = query.Order("begin_at DESC")
 
 	var sessions []models.Session
@@ -213,7 +188,6 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 		return
 	}
 
-	// Convert sessions to dtos
 	var sessionsDTO []dtos.GetSessionResponse
 	for _, session := range sessions {
 		sessionsDTO = append(sessionsDTO, dtos.GetSessionResponse{
@@ -224,20 +198,17 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 		})
 	}
 
-	// Return sessions
-	response := dtos.GetSessionsResponse{
+	resultResponse := dtos.GetSessionsResponse{
 		Sessions: sessionsDTO,
 		Total:    int64(len(sessions)),
 		Limit:    request.Limit,
 		Offset:   request.Offset,
 	}
 
-	// Return response
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
 
 func (sc *SessionController) GetSession(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
 	_, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -247,14 +218,13 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 		return
 	}
 
-	// Get session ID from path
 	sessionID := c.Param("id")
-
-	// Validate session exists
 	session := models.Session{
 		ID: uuid.MustParse(sessionID),
 	}
-	if err := sc.DB.First(&session, "id = ?", sessionID).Error; err != nil {
+	if err := sc.DB.Model(&models.Session{}).
+		Where("id = ?", sessionID).
+		First(&session).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Session not found",
 		}
@@ -262,14 +232,12 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 		return
 	}
 
-	// Return session
-	response := dtos.GetSessionResponse{
+	resultResponse := dtos.GetSessionResponse{
 		SessionID: session.ID,
 		BeginAt:   session.BeginAt,
 		EndAt:     session.EndAt,
 		Duration:  session.Duration,
 	}
 
-	// Return response
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
