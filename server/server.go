@@ -135,7 +135,6 @@ func (s *Server) setupRoutes() {
 		apiKeyDevices.Use(middleware.ApiKeyMiddleware(s.DB))
 		{
 			apiKeyDevices.POST("", deviceController.CreateOrUpdateDevice)
-			apiKeyDevices.GET("/:id", deviceController.GetDevice)
 		}
 
 		// Auth routes (for dashboard)
@@ -143,6 +142,7 @@ func (s *Server) setupRoutes() {
 		authDevices.Use(middleware.AuthMiddleware(s.DB))
 		{
 			authDevices.GET("", deviceController.GetDevices)
+			authDevices.GET("/:id", deviceController.GetDevice)
 			authDevices.DELETE("/:id", deviceController.DeleteDevice)
 		}
 	}

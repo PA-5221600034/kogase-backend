@@ -40,7 +40,9 @@ func (dc *DeviceController) CreateOrUpdateDevice(c *gin.Context) {
 	}
 
 	var device models.Device
-	result := dc.DB.Where("project_id = ? AND identifier = ?", projectID, request.Identifier).First(&device)
+	result := dc.DB.Model(&models.Device{}).
+		Where("project_id = ? AND identifier = ?", projectID, request.Identifier).
+		First(&device)
 
 	ipAddress := c.ClientIP()
 
@@ -144,10 +146,10 @@ func (dc *DeviceController) CreateOrUpdateDevice(c *gin.Context) {
 }
 
 func (dc *DeviceController) GetDevice(c *gin.Context) {
-	projectID, exists := c.Get("project_id")
+	_, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
-			Message: "Project not found",
+			Message: "User not found",
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -163,7 +165,9 @@ func (dc *DeviceController) GetDevice(c *gin.Context) {
 	}
 
 	var device models.Device
-	if err := dc.DB.Where("id = ? AND project_id = ?", deviceID, projectID).First(&device).Error; err != nil {
+	if err := dc.DB.Model(&models.Device{}).
+		Where("id = ?", deviceID).
+		First(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Device not found",
 		}
