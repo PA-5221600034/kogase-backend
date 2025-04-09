@@ -100,6 +100,7 @@ func (s *Server) setupRoutes() {
 	s.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Create controllers
+	analyticsController := controllers.NewAnalyticsController(s.DB)
 	authController := controllers.NewAuthController(s.DB)
 	deviceController := controllers.NewDeviceController(s.DB)
 	eventController := controllers.NewEventController(s.DB)
@@ -110,6 +111,13 @@ func (s *Server) setupRoutes() {
 
 	// API v1 routes
 	v1 := s.Router.Group("/api/v1")
+
+	// Analytics routes
+	analytics := v1.Group("/analytics")
+	analytics.Use(middleware.AuthMiddleware(s.DB))
+	{
+		analytics.GET("", analyticsController.GetAnalytics)
+	}
 
 	// Auth routes
 	auth := v1.Group("/auth")
@@ -178,15 +186,14 @@ func (s *Server) setupRoutes() {
 		apiSessions.Use(middleware.ApiKeyMiddleware(s.DB))
 		{
 			apiSessions.POST("/begin", sessionController.BeginSession)
-			apiSessions.POST("/finish", sessionController.EndSession)
+			apiSessions.POST("/end", sessionController.EndSession)
 		}
 
 		authSessions := sessions.Group("")
 		authSessions.Use(middleware.AuthMiddleware(s.DB))
 		{
-			authSessions.GET("", sessionController.GetAllSessions)
-			authSessions.GET("/project/:id", sessionController.GetProjectSessions)
-			authSessions.GET("/device/:id", sessionController.GetDeviceSessions)
+			authSessions.GET("", sessionController.GetSessions)
+			authSessions.GET("/:id", sessionController.GetSession)
 		}
 	}
 
@@ -194,10 +201,15 @@ func (s *Server) setupRoutes() {
 	users := v1.Group("/users")
 	{
 		users.POST("", userController.CreateUser)
-		users.GET("/:id", userController.GetUser)
-		users.GET("", userController.GetUsers)
-		users.PATCH("/:id", userController.UpdateUser)
-		users.DELETE("/:id", userController.DeleteUser)
+
+		authUsers := users.Group("")
+		authUsers.Use(middleware.AuthMiddleware(s.DB))
+		{
+			authUsers.GET("/:id", userController.GetUser)
+			authUsers.GET("", userController.GetUsers)
+			authUsers.PATCH("/:id", userController.UpdateUser)
+			authUsers.DELETE("/:id", userController.DeleteUser)
+		}
 	}
 }
 
