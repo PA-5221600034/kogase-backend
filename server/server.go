@@ -136,7 +136,6 @@ func (s *Server) setupRoutes() {
 		{
 			apiKeyDevices.POST("", deviceController.CreateOrUpdateDevice)
 			apiKeyDevices.GET("/:id", deviceController.GetDevice)
-			apiKeyDevices.PATCH("/:id", deviceController.UpdateDevice)
 		}
 
 		// Auth routes (for dashboard)
