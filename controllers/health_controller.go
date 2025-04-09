@@ -17,15 +17,14 @@ func NewHealthController(db *gorm.DB) *HealthController {
 }
 
 func (h *HealthController) GetHealth(c *gin.Context) {
-	response := dtos.HealthResponse{
+	resultResponse := dtos.HealthResponse{
 		Status: "ok",
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
 
 func (h *HealthController) GetHealthWithApiKey(c *gin.Context) {
-	// Get project ID from context (set by ApiKeyMiddleware)
 	_, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -35,9 +34,9 @@ func (h *HealthController) GetHealthWithApiKey(c *gin.Context) {
 		return
 	}
 
-	response := dtos.HealthResponse{
+	resultResponse := dtos.HealthResponse{
 		Status: "ok",
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
