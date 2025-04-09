@@ -3,10 +3,10 @@ package dtos
 import (
 	"time"
 
+	"github.com/atqamz/kogase-backend/models"
 	"github.com/google/uuid"
 )
 
-// CreateOrUpdateDeviceRequest represents a request to register or update a device
 type CreateOrUpdateDeviceRequest struct {
 	Identifier      string `json:"identifier" binding:"required"`
 	Platform        string `json:"platform" binding:"required"`
@@ -14,7 +14,6 @@ type CreateOrUpdateDeviceRequest struct {
 	AppVersion      string `json:"app_version" binding:"required"`
 }
 
-// GetDeviceResponse represents a response containing device information
 type GetDeviceResponse struct {
 	DeviceID        uuid.UUID `json:"device_id"`
 	Identifier      string    `json:"identifier"`
@@ -27,16 +26,25 @@ type GetDeviceResponse struct {
 	Country         string    `json:"country,omitempty"`
 }
 
-// GetDevicesRequestQuery represents a request query to list devices with filters
-type GetDevicesRequestQuery struct {
-	Platform  string `form:"platform" json:"platform,omitempty"`
-	StartDate string `form:"start_date" json:"start_date,omitempty"`
-	EndDate   string `form:"end_date" json:"end_date,omitempty"`
-	Limit     int    `form:"limit,default=20" json:"limit,omitempty"`
-	Offset    int    `form:"offset,default=0" json:"offset,omitempty"`
+type GetDeviceResponseDetail struct {
+	DeviceID        uuid.UUID      `json:"device_id"`
+	Identifier      string         `json:"identifier"`
+	Platform        string         `json:"platform"`
+	PlatformVersion string         `json:"platform_version"`
+	AppVersion      string         `json:"app_version"`
+	FirstSeen       time.Time      `json:"first_seen"`
+	LastSeen        time.Time      `json:"last_seen"`
+	IpAddress       string         `json:"ip_address,omitempty"`
+	Country         string         `json:"country,omitempty"`
+	Events          []models.Event `json:"events"`
 }
 
-// GetDevicesResponse represents a paginated list of devices
+type GetDevicesRequestQuery struct {
+	Platform string `form:"platform" json:"platform,omitempty"`
+	Limit    int    `form:"limit,default=20" json:"limit,omitempty"`
+	Offset   int    `form:"offset,default=0" json:"offset,omitempty"`
+}
+
 type GetDevicesResponse struct {
 	Devices    []GetDeviceResponse `json:"devices"`
 	TotalCount int64               `json:"total_count"`
@@ -44,7 +52,6 @@ type GetDevicesResponse struct {
 	Offset     int                 `json:"offset"`
 }
 
-// UpdateDeviceRequest represents a request to update a device
 type UpdateDeviceRequest struct {
 	Identifier      string `json:"identifier,omitempty"`
 	Platform        string `json:"platform,omitempty"`
@@ -64,7 +71,6 @@ type CreateOrUpdateDeviceResponse struct {
 	Country         string    `json:"country,omitempty"`
 }
 
-// DeleteDeviceResponse represents a response for a device deletion
 type DeleteDeviceResponse struct {
 	Message string `json:"message"`
 }

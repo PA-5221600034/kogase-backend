@@ -290,14 +290,6 @@ func (dc *DeviceController) GetDevices(c *gin.Context) {
 		dbQuery = dbQuery.Where("devices.platform = ?", query.Platform)
 	}
 
-	if query.StartDate != "" {
-		dbQuery = dbQuery.Where("devices.first_seen >= ?", query.StartDate)
-	}
-
-	if query.EndDate != "" {
-		dbQuery = dbQuery.Where("devices.last_seen <= ?", query.EndDate)
-	}
-
 	// Count total before pagination
 	var totalCount int64
 	if err := dbQuery.Count(&totalCount).Error; err != nil {

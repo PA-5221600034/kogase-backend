@@ -22,36 +22,23 @@ type EndSessionResponse struct {
 	Message string `json:"message"`
 }
 
-type GetDeviceSessionsRequestQuery struct {
+type GetSessionsRequestQuery struct {
 	ProjectID uuid.UUID `form:"project_id" json:"project_id,omitempty"`
-	DeviceID  uuid.UUID `form:"device_id" json:"device_id,omitempty"`
-	StartDate time.Time `form:"start_date" json:"start_date,omitempty"`
-	EndDate   time.Time `form:"end_date" json:"end_date,omitempty"`
+	FromDate  time.Time `form:"from_date" json:"from_date,omitempty"`
+	ToDate    time.Time `form:"to_date" json:"to_date,omitempty"`
 	Limit     int       `form:"limit,default=20" json:"limit,omitempty"`
 	Offset    int       `form:"offset,default=0" json:"offset,omitempty"`
 }
 
-type GetProjectSessionsRequestQuery struct {
-	ProjectID uuid.UUID `form:"project_id" json:"project_id,omitempty"`
-	StartDate time.Time `form:"start_date" json:"start_date,omitempty"`
-	EndDate   time.Time `form:"end_date" json:"end_date,omitempty"`
-	Limit     int       `form:"limit,default=20" json:"limit,omitempty"`
-	Offset    int       `form:"offset,default=0" json:"offset,omitempty"`
-}
-
-type GetAllSessionsRequestQuery struct {
-	StartDate time.Time `form:"start_date" json:"start_date,omitempty"`
-	EndDate   time.Time `form:"end_date" json:"end_date,omitempty"`
-	Limit     int       `form:"limit,default=20" json:"limit,omitempty"`
-	Offset    int       `form:"offset,default=0" json:"offset,omitempty"`
+type GetSessionRequest struct {
+	SessionID uuid.UUID `json:"session_id" binding:"required"`
 }
 
 type GetSessionResponse struct {
-	SessionID uuid.UUID `json:"session_id"`
-	ProjectID uuid.UUID `json:"project_id"`
-	DeviceID  uuid.UUID `json:"device_id"`
-	BeginAt   time.Time `json:"begin_at"`
-	EndAt     time.Time `json:"end_at"`
+	SessionID uuid.UUID     `json:"session_id"`
+	BeginAt   time.Time     `json:"begin_at"`
+	EndAt     time.Time     `json:"end_at"`
+	Duration  time.Duration `json:"duration"`
 }
 
 type GetSessionsResponse struct {

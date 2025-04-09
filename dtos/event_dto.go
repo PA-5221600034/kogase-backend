@@ -2,9 +2,10 @@ package dtos
 
 import (
 	"time"
+
+	"github.com/atqamz/kogase-backend/models"
 )
 
-// RecordEventRequest represents a telemetry event request
 type RecordEventRequest struct {
 	Identifier string                 `json:"identifier" binding:"required"`
 	EventType  string                 `json:"event_type" binding:"required"`
@@ -13,18 +14,40 @@ type RecordEventRequest struct {
 	Timestamp  *time.Time             `json:"timestamp"`
 }
 
-// RecordEventResponse represents a telemetry event response
 type RecordEventResponse struct {
 	Message string `json:"message"`
 }
 
-// RecordEventsRequest represents a batch of telemetry events
 type RecordEventsRequest struct {
 	Events []RecordEventRequest `json:"events" binding:"required"`
 }
 
-// RecordEventsResponse represents a batch of telemetry events response
 type RecordEventsResponse struct {
 	Message string `json:"message"`
 	Count   int    `json:"count"`
+}
+
+type EventQueryParams struct {
+	ProjectID string `json:"project_id" binding:"required"`
+	StartDate string `json:"start_date" binding:"required"`
+	EndDate   string `json:"end_date" binding:"required"`
+	EventType string `json:"event_type"`
+	EventName string `json:"event_name"`
+	Limit     int    `json:"limit"`
+	Offset    int    `json:"offset"`
+}
+
+type EventQueryResponse struct {
+	Events []models.Event `json:"events"`
+	Total  int            `json:"total"`
+}
+
+type EventCountByTypeResponse struct {
+	EventType string `json:"event_type"`
+	Count     int    `json:"count"`
+}
+
+type EventCountByDayResponse struct {
+	Date  string `json:"date"`
+	Count int    `json:"count"`
 }

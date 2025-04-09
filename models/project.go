@@ -16,6 +16,7 @@ type Project struct {
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+	Owner     User           `json:"owner,omitempty" gorm:"foreignKey:OwnerID;references:ID"`
 	Devices   []Device       `json:"devices,omitempty" gorm:"foreignKey:ProjectID;references:ID"`
 	Events    []Event        `json:"events,omitempty" gorm:"foreignKey:ProjectID;references:ID"`
 }

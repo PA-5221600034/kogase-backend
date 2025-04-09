@@ -5,56 +5,54 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreateProjectRequest represents the create project payload
 type CreateProjectRequest struct {
 	Name string `json:"name" binding:"required"`
 }
 
-// CreateProjectResponse represents the create project response
 type CreateProjectResponse struct {
 	ProjectID uuid.UUID `json:"project_id"`
 	Name      string    `json:"name"`
 	ApiKey    string    `json:"api_key"`
-	OwnerID   uuid.UUID `json:"owner_id"`
+	Owner     OwnerDto  `json:"owner"`
 }
 
-// GetProjectResponseDetail represents the get project response detail (with Devices and Events)
 type GetProjectResponseDetail struct {
 	ProjectID uuid.UUID       `json:"project_id"`
 	Name      string          `json:"name"`
 	ApiKey    string          `json:"api_key"`
-	OwnerID   uuid.UUID       `json:"owner_id"`
+	Owner     OwnerDto        `json:"owner"`
 	Devices   []models.Device `json:"devices"`
 	Events    []models.Event  `json:"events"`
 }
 
-// GetProjectResponse represents the get project response
 type GetProjectResponse struct {
 	ProjectID uuid.UUID `json:"project_id"`
 	Name      string    `json:"name"`
 	ApiKey    string    `json:"api_key"`
-	OwnerID   uuid.UUID `json:"owner_id"`
+	Owner     OwnerDto  `json:"owner"`
 }
 
-// GetProjectsResponse represents the get projects response
 type GetProjectsResponse struct {
 	Projects []GetProjectResponse `json:"projects"`
 }
 
-// UpdateProjectRequest represents the update project payload
 type UpdateProjectRequest struct {
 	Name string `json:"name" binding:"omitempty"`
 }
 
-// UpdateProjectResponse represents the update project response
 type UpdateProjectResponse struct {
 	ProjectID uuid.UUID `json:"project_id"`
 	Name      string    `json:"name"`
 	ApiKey    string    `json:"api_key"`
-	OwnerID   uuid.UUID `json:"owner_id"`
+	Owner     OwnerDto  `json:"owner"`
 }
 
-// DeleteProjectResponse represents the delete project response
 type DeleteProjectResponse struct {
 	Message string `json:"message"`
+}
+
+type OwnerDto struct {
+	ID    uuid.UUID `json:"id"`
+	Email string    `json:"email"`
+	Name  string    `json:"name"`
 }

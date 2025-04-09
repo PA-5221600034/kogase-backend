@@ -76,7 +76,11 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 		ProjectID: project.ID,
 		Name:      project.Name,
 		ApiKey:    project.ApiKey,
-		OwnerID:   project.OwnerID,
+		Owner: dtos.OwnerDto{
+			ID:    project.Owner.ID,
+			Email: project.Owner.Email,
+			Name:  project.Owner.Name,
+		},
 	}
 
 	// Return response
@@ -141,9 +145,13 @@ func (pc *ProjectController) GetProject(c *gin.Context) {
 		ProjectID: project.ID,
 		Name:      project.Name,
 		ApiKey:    project.ApiKey,
-		OwnerID:   project.OwnerID,
-		Devices:   project.Devices,
-		Events:    project.Events,
+		Owner: dtos.OwnerDto{
+			ID:    project.Owner.ID,
+			Email: project.Owner.Email,
+			Name:  project.Owner.Name,
+		},
+		Devices: project.Devices,
+		Events:  project.Events,
 	}
 
 	// Return response
@@ -162,7 +170,7 @@ func (pc *ProjectController) GetProject(c *gin.Context) {
 // @Router /api/v1/projects [get]
 func (pc *ProjectController) GetProjects(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
-	userID, exists := c.Get("user_id")
+	_, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
 			Message: "User not found",
@@ -171,9 +179,8 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 		return
 	}
 
-	// Get projects, users can only see their own projects
 	var projects []models.Project
-	if err := pc.DB.Where("owner_id = ?", userID).Find(&projects).Error; err != nil {
+	if err := pc.DB.Find(&projects).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Failed to retrieve projects",
 		}
@@ -190,6 +197,11 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 			ProjectID: project.ID,
 			Name:      project.Name,
 			ApiKey:    project.ApiKey,
+			Owner: dtos.OwnerDto{
+				ID:    project.Owner.ID,
+				Email: project.Owner.Email,
+				Name:  project.Owner.Name,
+			},
 		}
 	}
 
@@ -214,7 +226,7 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 // @Router /api/v1/projects/{id} [patch]
 func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
-	userID, exists := c.Get("user_id")
+	_, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
 			Message: "User not found",
@@ -241,15 +253,6 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 			Message: "Project not found",
 		}
 		c.JSON(http.StatusNotFound, response)
-		return
-	}
-
-	// Check if user has access to project (only owner has access)
-	if project.OwnerID != userID.(uuid.UUID) {
-		response := dtos.ErrorResponse{
-			Message: "Access denied",
-		}
-		c.JSON(http.StatusForbidden, response)
 		return
 	}
 
@@ -281,7 +284,11 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 		ProjectID: project.ID,
 		Name:      project.Name,
 		ApiKey:    project.ApiKey,
-		OwnerID:   project.OwnerID,
+		Owner: dtos.OwnerDto{
+			ID:    project.Owner.ID,
+			Email: project.Owner.Email,
+			Name:  project.Owner.Name,
+		},
 	}
 
 	// Return response
@@ -303,7 +310,7 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 // @Router /api/v1/projects/{id} [delete]
 func (pc *ProjectController) DeleteProject(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
-	userID, exists := c.Get("user_id")
+	_, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
 			Message: "User not found",
@@ -330,15 +337,6 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 			Message: "Project not found",
 		}
 		c.JSON(http.StatusNotFound, response)
-		return
-	}
-
-	// Check if user has access to project (only owner has access)
-	if project.OwnerID != userID.(uuid.UUID) {
-		response := dtos.ErrorResponse{
-			Message: "Access denied",
-		}
-		c.JSON(http.StatusForbidden, response)
 		return
 	}
 
@@ -400,9 +398,13 @@ func (pc *ProjectController) GetProjectWithApiKey(c *gin.Context) {
 		ProjectID: project.ID,
 		Name:      project.Name,
 		ApiKey:    project.ApiKey,
-		OwnerID:   project.OwnerID,
-		Devices:   project.Devices,
-		Events:    project.Events,
+		Owner: dtos.OwnerDto{
+			ID:    project.Owner.ID,
+			Email: project.Owner.Email,
+			Name:  project.Owner.Name,
+		},
+		Devices: project.Devices,
+		Events:  project.Events,
 	}
 
 	// Return response
@@ -425,7 +427,7 @@ func (pc *ProjectController) GetProjectWithApiKey(c *gin.Context) {
 // @Router /api/v1/projects/{id}/apikey [post]
 func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
 	// Get user ID from context (set by AuthMiddleware)
-	userID, exists := c.Get("user_id")
+	_, exists := c.Get("user_id")
 	if !exists {
 		response := dtos.ErrorResponse{
 			Message: "User not found",
@@ -455,15 +457,6 @@ func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
 		return
 	}
 
-	// Check if user has access to project (only owner has access)
-	if project.OwnerID != userID.(uuid.UUID) {
-		response := dtos.ErrorResponse{
-			Message: "Access denied",
-		}
-		c.JSON(http.StatusForbidden, response)
-		return
-	}
-
 	// Generate new API key
 	project.ApiKey = uuid.New().String()
 
@@ -481,7 +474,11 @@ func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
 		ProjectID: project.ID,
 		Name:      project.Name,
 		ApiKey:    project.ApiKey,
-		OwnerID:   project.OwnerID,
+		Owner: dtos.OwnerDto{
+			ID:    project.Owner.ID,
+			Email: project.Owner.Email,
+			Name:  project.Owner.Name,
+		},
 	}
 
 	// Return response
