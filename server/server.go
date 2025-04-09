@@ -196,7 +196,7 @@ func (s *Server) setupRoutes() {
 		}
 	}
 
-	// User Management routes (authenticated)
+	// User routes
 	users := v1.Group("/users")
 	{
 		users.POST("", userController.CreateUser)
@@ -204,8 +204,8 @@ func (s *Server) setupRoutes() {
 		authUsers := users.Group("")
 		authUsers.Use(middleware.AuthMiddleware(s.DB))
 		{
-			authUsers.GET("/:id", userController.GetUser)
 			authUsers.GET("", userController.GetUsers)
+			authUsers.GET("/:id", userController.GetUser)
 			authUsers.PATCH("/:id", userController.UpdateUser)
 			authUsers.DELETE("/:id", userController.DeleteUser)
 		}

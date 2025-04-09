@@ -16,11 +16,8 @@ type CreateUserResponse struct {
 	Name  string `json:"name"`
 }
 
-type GetUserResponseDetail struct {
-	UserID   uuid.UUID        `json:"user_id"`
-	Email    string           `json:"email"`
-	Name     string           `json:"name"`
-	Projects []models.Project `json:"projects"`
+type GetUsersResponse struct {
+	Users []GetUserResponse `json:"users"`
 }
 
 type GetUserResponse struct {
@@ -29,8 +26,9 @@ type GetUserResponse struct {
 	Name   string    `json:"name"`
 }
 
-type GetUsersResponse struct {
-	Users []GetUserResponse `json:"users"`
+type GetUserResponseDetail struct {
+	GetUserResponse
+	Projects []models.Project `json:"projects"`
 }
 
 type UpdateUserRequest struct {

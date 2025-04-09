@@ -10,31 +10,15 @@ import (
 	"gorm.io/gorm"
 )
 
-// UserController handles user-related endpoints
 type UserController struct {
 	DB *gorm.DB
 }
 
-// NewUserController creates a new UserController instance
 func NewUserController(db *gorm.DB) *UserController {
 	return &UserController{DB: db}
 }
 
-// CreateUser creates a new user
-// @Summary Create user
-// @Description Create a new user
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param user body dtos.RegisterRequest true "User details"
-// @Security BearerAuth
-// @Success 201 {object} models.User
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 409 {object} map[string]string
-// @Router /api/v1/users [post]
 func (uc *UserController) CreateUser(c *gin.Context) {
-	// Parse request
 	var userReq dtos.CreateUserRequest
 	if err := c.ShouldBindJSON(&userReq); err != nil {
 		response := dtos.ErrorResponse{
@@ -44,9 +28,10 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Check if email already exists
 	var existingUser models.User
-	if err := uc.DB.Where("email = ?", userReq.Email).First(&existingUser).Error; err == nil {
+	if err := uc.DB.Model(&models.User{}).
+		Where("email = ?", userReq.Email).
+		First(&existingUser).Error; err == nil {
 		response := dtos.ErrorResponse{
 			Message: "Email already in use",
 		}
@@ -54,7 +39,6 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Hash password
 	hashedPassword, err := utils.HashPassword(userReq.Password)
 	if err != nil {
 		response := dtos.ErrorResponse{
@@ -64,7 +48,6 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Create user
 	user := models.User{
 		Email:    userReq.Email,
 		Password: hashedPassword,
@@ -78,68 +61,15 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Return user
-	c.JSON(http.StatusCreated, user)
+	resultResponse := dtos.CreateUserResponse{
+		Email: user.Email,
+		Name:  user.Name,
+	}
+
+	c.JSON(http.StatusCreated, resultResponse)
 }
 
-// GetUser returns a specific user by ID
-// @Summary Get user
-// @Description Get a specific user by ID
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param id path string true "User ID"
-// @Security BearerAuth
-// @Success 200 {object} models.User
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Router /api/v1/users/{id} [get]
-func (uc *UserController) GetUser(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
-	userID, exist := c.Get("user_id")
-	if !exist {
-		response := dtos.ErrorResponse{
-			Message: "User not found",
-		}
-		c.JSON(http.StatusUnauthorized, response)
-		return
-	}
-
-	// Get user
-	var user models.User
-	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
-		response := dtos.ErrorResponse{
-			Message: "User not found",
-		}
-		c.JSON(http.StatusNotFound, response)
-		return
-	}
-
-	// Create response DTO
-	response := dtos.GetUserResponseDetail{
-		UserID:   user.ID,
-		Email:    user.Email,
-		Name:     user.Name,
-		Projects: user.Projects,
-	}
-
-	// Return user
-	c.JSON(http.StatusOK, response)
-}
-
-// GetUsers returns all users
-// @Summary List users
-// @Description Get all users
-// @Tags users
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {array} models.User
-// @Failure 401 {object} map[string]string
-// @Router /api/v1/users [get]
 func (uc *UserController) GetUsers(c *gin.Context) {
-	// Get users
 	var users []models.User
 	if err := uc.DB.Find(&users).Error; err != nil {
 		response := dtos.ErrorResponse{
@@ -149,38 +79,21 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 		return
 	}
 
-	// Create response DTO
-	response := dtos.GetUsersResponse{
+	resultResponse := dtos.GetUsersResponse{
 		Users: make([]dtos.GetUserResponse, len(users)),
 	}
 	for i, user := range users {
-		response.Users[i] = dtos.GetUserResponse{
+		resultResponse.Users[i] = dtos.GetUserResponse{
 			UserID: user.ID,
 			Email:  user.Email,
 			Name:   user.Name,
 		}
 	}
 
-	// Return response
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
 
-// UpdateUser updates a user
-// @Summary Update user
-// @Description Update user details
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param id path string true "User ID"
-// @Param user body dtos.UpdateUserRequest true "User details"
-// @Security BearerAuth
-// @Success 200 {object} models.User
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Router /api/v1/users [patch]
-func (uc *UserController) UpdateUser(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
+func (uc *UserController) GetUser(c *gin.Context) {
 	userID, exist := c.Get("user_id")
 	if !exist {
 		response := dtos.ErrorResponse{
@@ -190,9 +103,10 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Get user
 	var user models.User
-	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
+	if err := uc.DB.Model(&models.User{}).
+		Where("id = ?", userID).
+		First(&user).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "User not found",
 		}
@@ -200,7 +114,39 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Parse request
+	resultResponse := dtos.GetUserResponseDetail{
+		GetUserResponse: dtos.GetUserResponse{
+			UserID: user.ID,
+			Email:  user.Email,
+			Name:   user.Name,
+		},
+		Projects: user.Projects,
+	}
+
+	c.JSON(http.StatusOK, resultResponse)
+}
+
+func (uc *UserController) UpdateUser(c *gin.Context) {
+	userID, exist := c.Get("user_id")
+	if !exist {
+		response := dtos.ErrorResponse{
+			Message: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	var user models.User
+	if err := uc.DB.Model(&models.User{}).
+		Where("id = ?", userID).
+		First(&user).Error; err != nil {
+		response := dtos.ErrorResponse{
+			Message: "User not found",
+		}
+		c.JSON(http.StatusNotFound, response)
+		return
+	}
+
 	var updateReq dtos.UpdateUserRequest
 	if err := c.ShouldBindJSON(&updateReq); err != nil {
 		response := dtos.ErrorResponse{
@@ -210,12 +156,10 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Update only provided fields
 	if updateReq.Name != "" {
 		user.Name = updateReq.Name
 	}
 
-	// Update password if provided
 	if updateReq.Password != "" {
 		hashedPassword, err := utils.HashPassword(updateReq.Password)
 		if err != nil {
@@ -228,7 +172,6 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		user.Password = hashedPassword
 	}
 
-	// Save user
 	if err := uc.DB.Save(&user).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Failed to update user",
@@ -237,31 +180,15 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Create response DTO
-	response := dtos.UpdateUserResponse{
+	resultResponse := dtos.UpdateUserResponse{
 		Email: user.Email,
 		Name:  user.Name,
 	}
 
-	// Return user
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
 
-// DeleteUser deletes a user
-// @Summary Delete user
-// @Description Delete a user
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param id path string true "User ID"
-// @Security BearerAuth
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Router /api/v1/users [delete]
 func (uc *UserController) DeleteUser(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
 	userID, exist := c.Get("user_id")
 	if !exist {
 		response := dtos.ErrorResponse{
@@ -271,9 +198,10 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// Get user
 	var user models.User
-	if err := uc.DB.First(&user, "id = ?", userID).Error; err != nil {
+	if err := uc.DB.Model(&models.User{}).
+		Where("id = ?", userID).
+		First(&user).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "User not found",
 		}
@@ -281,7 +209,6 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// Delete user
 	if err := uc.DB.Delete(&user).Error; err != nil {
 		response := dtos.ErrorResponse{
 			Message: "Failed to delete user",
@@ -290,11 +217,9 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// Create response DTO
-	response := dtos.DeleteUserResponse{
+	resultResponse := dtos.DeleteUserResponse{
 		Message: "User deleted successfully",
 	}
 
-	// Return response
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resultResponse)
 }
