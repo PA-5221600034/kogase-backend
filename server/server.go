@@ -147,10 +147,20 @@ func (s *Server) setupRoutes() {
 
 	// Telemetry Collection routes (API key required)
 	events := v1.Group("/events")
-	events.Use(middleware.ApiKeyMiddleware(s.DB))
 	{
-		events.POST("", eventController.RecordEvent)
-		events.POST("/batch", eventController.RecordEvents)
+		apiKeyEvents := events.Group("")
+		apiKeyEvents.Use(middleware.ApiKeyMiddleware(s.DB))
+		{
+			apiKeyEvents.POST("", eventController.RecordEvent)
+			apiKeyEvents.POST("/batch", eventController.RecordEvents)
+		}
+
+		authEvents := events.Group("")
+		authEvents.Use(middleware.AuthMiddleware(s.DB))
+		{
+			authEvents.GET("", eventController.GetEvents)
+			authEvents.GET("/:id", eventController.GetEvent)
+		}
 	}
 
 	health := v1.Group("/health")

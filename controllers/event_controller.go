@@ -11,30 +11,15 @@ import (
 	"gorm.io/gorm"
 )
 
-// EventController handles telemetry-related endpoints
 type EventController struct {
 	DB *gorm.DB
 }
 
-// NewEventController creates a new EventController instance
 func NewEventController(db *gorm.DB) *EventController {
 	return &EventController{DB: db}
 }
 
-// RecordEvent records a single telemetry event
-// @Summary Record event
-// @Description Record a telemetry event
-// @Tags telemetry
-// @Accept json
-// @Produce json
-// @Param event body dtos.EventRequest true "Event details"
-// @Security ApiKeyAuth
-// @Success 201 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Router /api/v1/telemetry/events [post]
 func (tc *EventController) RecordEvent(c *gin.Context) {
-	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -44,7 +29,6 @@ func (tc *EventController) RecordEvent(c *gin.Context) {
 		return
 	}
 
-	// Bind request body
 	var request dtos.RecordEventRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		response := dtos.ErrorResponse{
@@ -54,7 +38,6 @@ func (tc *EventController) RecordEvent(c *gin.Context) {
 		return
 	}
 
-	// Verify device exists and belongs to this project
 	var device models.Device
 	if err := tc.DB.Where("identifier = ? AND project_id = ?", request.Identifier, projectID).First(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
@@ -64,7 +47,6 @@ func (tc *EventController) RecordEvent(c *gin.Context) {
 		return
 	}
 
-	// Update device last seen
 	device.LastSeen = time.Now()
 	if err := tc.DB.Save(&device).Error; err != nil {
 		response := dtos.ErrorResponse{
@@ -74,7 +56,6 @@ func (tc *EventController) RecordEvent(c *gin.Context) {
 		return
 	}
 
-	// Create event
 	timestamp := time.Now()
 	if request.Timestamp != nil {
 		timestamp = *request.Timestamp
@@ -96,29 +77,14 @@ func (tc *EventController) RecordEvent(c *gin.Context) {
 		return
 	}
 
-	// Create response DTO
-	response := dtos.RecordEventResponse{
+	resultResponse := dtos.RecordEventResponse{
 		Message: "Event recorded successfully",
 	}
 
-	// Return response
-	c.JSON(http.StatusCreated, response)
+	c.JSON(http.StatusCreated, resultResponse)
 }
 
-// RecordEvents records multiple telemetry events in a batch
-// @Summary Record events batch
-// @Description Record multiple telemetry events in a batch
-// @Tags telemetry
-// @Accept json
-// @Produce json
-// @Param events body dtos.EventsRequest true "Events batch"
-// @Security ApiKeyAuth
-// @Success 201 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Router /api/v1/telemetry/events/batch [post]
 func (tc *EventController) RecordEvents(c *gin.Context) {
-	// Get project ID from context (set by ApiKeyMiddleware)
 	projectID, exists := c.Get("project_id")
 	if !exists {
 		response := dtos.ErrorResponse{
@@ -137,29 +103,23 @@ func (tc *EventController) RecordEvents(c *gin.Context) {
 		return
 	}
 
-	// Process events in a transaction
 	err := tc.DB.Transaction(func(tx *gorm.DB) error {
-		// Keep track of devices to avoid multiple lookups and updates
 		devices := make(map[string]models.Device)
 
 		for _, eventReq := range request.Events {
-			// Verify device exists and belongs to this project
 			if device, exists := devices[eventReq.Identifier]; !exists {
 				if err := tx.Where("project_id = ? AND identifier = ?", projectID, eventReq.Identifier).First(&device).Error; err != nil {
 					return err
 				}
 
-				// Update device last seen
 				device.LastSeen = time.Now()
 				if err := tx.Save(&device).Error; err != nil {
 					return err
 				}
 
-				// Mark device as verified
 				devices[eventReq.Identifier] = device
 			}
 
-			// Create event
 			timestamp := time.Now()
 			if eventReq.Timestamp != nil {
 				timestamp = *eventReq.Timestamp
@@ -189,12 +149,124 @@ func (tc *EventController) RecordEvents(c *gin.Context) {
 		return
 	}
 
-	// Create response DTO
-	response := dtos.RecordEventsResponse{
+	resultResponse := dtos.RecordEventsResponse{
 		Message: "Events recorded successfully",
 		Count:   len(request.Events),
 	}
 
-	// Return response
-	c.JSON(http.StatusCreated, response)
+	c.JSON(http.StatusCreated, resultResponse)
+}
+
+func (tc *EventController) GetEvents(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		response := dtos.ErrorResponse{
+			Message: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	var request dtos.GetEventsRequestQuery
+	if err := c.ShouldBindQuery(&request); err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Invalid request",
+		}
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	dbQuery := tc.DB.Model(&models.Event{})
+	if request.ProjectID != "" {
+		dbQuery = dbQuery.Where("project_id = ?", request.ProjectID)
+	}
+	if request.StartDate != "" {
+		dbQuery = dbQuery.Where("timestamp >= ?", request.StartDate)
+	}
+	if request.EndDate != "" {
+		dbQuery = dbQuery.Where("timestamp <= ?", request.EndDate)
+	}
+	if request.EventType != "" {
+		dbQuery = dbQuery.Where("event_type = ?", request.EventType)
+	}
+	if request.EventName != "" {
+		dbQuery = dbQuery.Where("event_name = ?", request.EventName)
+	}
+
+	var totalCount int64
+	if err := dbQuery.Count(&totalCount).Error; err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Failed to count events",
+		}
+		c.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	var events []models.Event
+	if err := dbQuery.Order("timestamp DESC").Limit(request.Limit).Offset(request.Offset).Find(&events).Error; err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Failed to get events",
+		}
+		c.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	eventsResponse := make([]dtos.GetEventResponse, len(events))
+	for i, event := range events {
+		eventsResponse[i] = dtos.GetEventResponse{
+			EventID:    event.ID.String(),
+			EventType:  event.EventType,
+			EventName:  event.EventName,
+			Payloads:   event.Payloads,
+			Timestamp:  event.Timestamp,
+			ReceivedAt: event.ReceivedAt,
+		}
+	}
+
+	resultResponse := dtos.GetEventsResponse{
+		Events: eventsResponse,
+		Total:  int(totalCount),
+	}
+
+	c.JSON(http.StatusOK, resultResponse)
+}
+
+func (tc *EventController) GetEvent(c *gin.Context) {
+	_, exists := c.Get("user_id")
+	if !exists {
+		response := dtos.ErrorResponse{
+			Message: "User not found",
+		}
+		c.JSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	var request dtos.GetEventRequest
+	if err := c.ShouldBindQuery(&request); err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Invalid request",
+		}
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	var event models.Event
+	if err := tc.DB.Where("id = ?", request.EventID).First(&event).Error; err != nil {
+		response := dtos.ErrorResponse{
+			Message: "Event not found",
+		}
+		c.JSON(http.StatusNotFound, response)
+		return
+	}
+
+	resultResponse := dtos.GetEventResponse{
+		EventID:    event.ID.String(),
+		EventType:  event.EventType,
+		EventName:  event.EventName,
+		Payloads:   event.Payloads,
+		Timestamp:  event.Timestamp,
+		ReceivedAt: event.ReceivedAt,
+	}
+
+	c.JSON(http.StatusOK, resultResponse)
 }

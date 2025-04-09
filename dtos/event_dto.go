@@ -2,8 +2,6 @@ package dtos
 
 import (
 	"time"
-
-	"github.com/atqamz/kogase-backend/models"
 )
 
 type RecordEventRequest struct {
@@ -27,27 +25,30 @@ type RecordEventsResponse struct {
 	Count   int    `json:"count"`
 }
 
-type EventQueryParams struct {
-	ProjectID string `json:"project_id" binding:"required"`
-	StartDate string `json:"start_date" binding:"required"`
-	EndDate   string `json:"end_date" binding:"required"`
-	EventType string `json:"event_type"`
-	EventName string `json:"event_name"`
-	Limit     int    `json:"limit"`
-	Offset    int    `json:"offset"`
+type GetEventsRequestQuery struct {
+	ProjectID string `form:"project_id" json:"project_id,omitempty"`
+	StartDate string `form:"start_date" json:"start_date,omitempty"`
+	EndDate   string `form:"end_date" json:"end_date,omitempty"`
+	EventType string `form:"event_type" json:"event_type,omitempty"`
+	EventName string `form:"event_name" json:"event_name,omitempty"`
+	Limit     int    `form:"limit" json:"limit,omitempty"`
+	Offset    int    `form:"offset" json:"offset,omitempty"`
 }
 
-type EventQueryResponse struct {
-	Events []models.Event `json:"events"`
-	Total  int            `json:"total"`
+type GetEventsResponse struct {
+	Events []GetEventResponse `json:"events"`
+	Total  int                `json:"total"`
 }
 
-type EventCountByTypeResponse struct {
-	EventType string `json:"event_type"`
-	Count     int    `json:"count"`
+type GetEventRequest struct {
+	EventID string `form:"event_id" json:"event_id,omitempty"`
 }
 
-type EventCountByDayResponse struct {
-	Date  string `json:"date"`
-	Count int    `json:"count"`
+type GetEventResponse struct {
+	EventID    string                 `json:"event_id"`
+	EventType  string                 `json:"event_type"`
+	EventName  string                 `json:"event_name"`
+	Payloads   map[string]interface{} `json:"payloads"`
+	Timestamp  time.Time              `json:"timestamp"`
+	ReceivedAt time.Time              `json:"received_at"`
 }
