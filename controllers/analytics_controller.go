@@ -20,7 +20,6 @@ func NewAnalyticsController(db *gorm.DB) *AnalyticsController {
 }
 
 func (ac *AnalyticsController) GetAnalytics(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
 	_, exist := c.Get("user_id")
 	if !exist {
 		response := dtos.ErrorResponse{
@@ -29,7 +28,6 @@ func (ac *AnalyticsController) GetAnalytics(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, response)
 	}
 
-	// Bind request query
 	var request dtos.GetAnalyticsRequestQuery
 	if err := c.ShouldBindQuery(&request); err != nil {
 		response := dtos.ErrorResponse{
@@ -39,15 +37,13 @@ func (ac *AnalyticsController) GetAnalytics(c *gin.Context) {
 		return
 	}
 
-	sessionQuery := ac.DB
+	sessionQuery := ac.DB.Model(&models.Session{})
 	if request.ProjectID != uuid.Nil {
 		sessionQuery = sessionQuery.Where("project_id = ?", request.ProjectID)
 	}
-
 	if !request.FromDate.IsZero() {
 		sessionQuery = sessionQuery.Where("begin_at >= ?", request.FromDate)
 	}
-
 	if !request.ToDate.IsZero() {
 		sessionQuery = sessionQuery.Where("begin_at <= ?", request.ToDate)
 	}
@@ -59,49 +55,42 @@ func (ac *AnalyticsController) GetAnalytics(c *gin.Context) {
 		TotalInstalls: 0,
 	}
 
-	// get all sessions model
 	var sessions []models.Session
 	if err := sessionQuery.Find(&sessions).Error; err != nil {
 		response.DAU = 0
 		response.MAU = 0
 		response.TotalDuration = 0
 	} else {
-
-		// calculate dau
 		for _, session := range sessions {
 			if session.BeginAt.After(time.Now().AddDate(0, 0, -1)) {
 				response.DAU++
 			}
 		}
-
-		// calculate mau
 		for _, session := range sessions {
 			if session.BeginAt.After(time.Now().AddDate(0, 0, -30)) {
 				response.MAU++
 			}
 		}
-
-		// calculate total duration
 		for _, session := range sessions {
 			response.TotalDuration += session.Duration
 		}
 	}
 
-	eventQuery := ac.DB
+	eventQuery := ac.DB.Model(&models.Event{})
 	if request.ProjectID != uuid.Nil {
 		eventQuery = eventQuery.Where("project_id = ?", request.ProjectID)
 	}
-
 	if !request.FromDate.IsZero() {
 		eventQuery = eventQuery.Where("received_at >= ?", request.FromDate)
 	}
-
 	if !request.ToDate.IsZero() {
 		eventQuery = eventQuery.Where("received_at <= ?", request.ToDate)
 	}
 
 	var totalInstalls int64
-	if err := eventQuery.Model(&models.Event{}).Where("event_type = ? AND event_name = ?", "predefined", "install").Count(&totalInstalls).Error; err != nil {
+	if err := eventQuery.Model(&models.Event{}).
+		Where("event_type = ? AND event_name = ?", "predefined", "install").
+		Count(&totalInstalls).Error; err != nil {
 		response.TotalInstalls = 0
 	} else {
 		response.TotalInstalls = int(totalInstalls)
