@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// User represents a user of the dashboard
 type User struct {
 	ID        uuid.UUID      `json:"id" gorm:"type:uuid;primary_key"`
 	Email     string         `json:"email" gorm:"unique;not null"`
@@ -19,7 +18,6 @@ type User struct {
 	Projects  []Project      `json:"projects,omitempty" gorm:"foreignKey:OwnerID;references:ID"`
 }
 
-// BeforeCreate will set a UUID rather than numeric ID.
 func (user *User) BeforeCreate(_ *gorm.DB) error {
 	if user.ID == uuid.Nil {
 		user.ID = uuid.New()

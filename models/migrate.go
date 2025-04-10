@@ -9,7 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// MigrateDB handles the database migration process
 func MigrateDB(db *gorm.DB) error {
 	log.Println("Running database migrations...")
 
@@ -59,7 +58,6 @@ func MigrateDB(db *gorm.DB) error {
 	return nil
 }
 
-// createDefaultAdminUser creates a default admin user if no users exist in the database
 func createDefaultAdminUser(db *gorm.DB) error {
 	// Check if any users exist
 	var count int64

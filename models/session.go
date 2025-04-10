@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Session represents a user session
 type Session struct {
 	ID        uuid.UUID      `json:"id" gorm:"type:uuid;primary_key"`
 	ProjectID uuid.UUID      `json:"project_id" gorm:"type:uuid;not null"`
@@ -27,7 +26,6 @@ func (session *Session) BeforeCreate(_ *gorm.DB) error {
 		session.ID = uuid.New()
 	}
 
-	// Set begin at if not set
 	now := time.Now()
 	if session.BeginAt.IsZero() {
 		session.BeginAt = now

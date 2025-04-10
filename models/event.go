@@ -10,17 +10,12 @@ import (
 	"gorm.io/gorm"
 )
 
-// Payloads is a JSON object for event payloads
 type Payloads map[string]interface{}
 
-// Value makes the Parameters struct implement the driver.Valuer interface.
-// This method is used to convert the Parameters to a value that can be stored in the database.
 func (p Payloads) Value() (driver.Value, error) {
 	return json.Marshal(p)
 }
 
-// Scan makes the Parameters struct implement the sql.Scanner interface.
-// This method is used to convert a value from the database to a Parameters.
 func (p *Payloads) Scan(value interface{}) error {
 	bytes, ok := value.([]byte)
 	if !ok {
@@ -30,7 +25,6 @@ func (p *Payloads) Scan(value interface{}) error {
 	return json.Unmarshal(bytes, &p)
 }
 
-// Event represents a telemetry event
 type Event struct {
 	ID         uuid.UUID      `json:"id" gorm:"type:uuid;primary_key"`
 	ProjectID  uuid.UUID      `json:"project_id" gorm:"type:uuid;not null"`
@@ -47,18 +41,15 @@ type Event struct {
 	Device     Device         `json:"-" gorm:"foreignKey:DeviceID;references:ID"`
 }
 
-// BeforeCreate will set a UUID rather than numeric ID
 func (event *Event) BeforeCreate(_ *gorm.DB) error {
 	if event.ID == uuid.Nil {
 		event.ID = uuid.New()
 	}
 
-	// Set received timestamp if not set
 	if event.ReceivedAt.IsZero() {
 		event.ReceivedAt = time.Now()
 	}
 
-	// Set event timestamp to now if not provided
 	if event.Timestamp.IsZero() {
 		event.Timestamp = time.Now()
 	}

@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// AuthToken represents a JWT token for dashboard users
 type AuthToken struct {
 	ID         uuid.UUID      `json:"id" gorm:"type:uuid;primary_key"`
 	UserID     uuid.UUID      `json:"user_id" gorm:"type:uuid;not null"`
@@ -20,13 +19,11 @@ type AuthToken struct {
 	User       User           `json:"-" gorm:"foreignKey:UserID;references:ID"`
 }
 
-// BeforeCreate will set a UUID rather than numeric ID
 func (token *AuthToken) BeforeCreate(_ *gorm.DB) error {
 	if token.ID == uuid.Nil {
 		token.ID = uuid.New()
 	}
 
-	// Set last used to now if not set
 	if token.LastUsedAt.IsZero() {
 		token.LastUsedAt = time.Now()
 	}

@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Device represents a unique player device
 type Device struct {
 	ID              uuid.UUID      `json:"id" gorm:"type:uuid;primary_key"`
 	ProjectID       uuid.UUID      `json:"project_id" gorm:"type:uuid;not null"`
@@ -26,13 +25,11 @@ type Device struct {
 	Events          []Event        `json:"events,omitempty" gorm:"foreignKey:DeviceID;references:ID"`
 }
 
-// BeforeCreate will set a UUID rather than numeric ID
 func (device *Device) BeforeCreate(_ *gorm.DB) error {
 	if device.ID == uuid.Nil {
 		device.ID = uuid.New()
 	}
 
-	// Set first and last seen if not set
 	now := time.Now()
 	if device.FirstSeen.IsZero() {
 		device.FirstSeen = now
