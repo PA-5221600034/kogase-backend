@@ -180,11 +180,11 @@ func (tc *EventController) GetEvents(c *gin.Context) {
 	if request.ProjectID != "" {
 		dbQuery = dbQuery.Where("project_id = ?", request.ProjectID)
 	}
-	if request.StartDate != "" {
-		dbQuery = dbQuery.Where("timestamp >= ?", request.StartDate)
+	if request.FromDate != "" {
+		dbQuery = dbQuery.Where("timestamp >= ?", request.FromDate)
 	}
-	if request.EndDate != "" {
-		dbQuery = dbQuery.Where("timestamp <= ?", request.EndDate)
+	if request.ToDate != "" {
+		dbQuery = dbQuery.Where("timestamp <= ?", request.ToDate)
 	}
 	if request.EventType != "" {
 		dbQuery = dbQuery.Where("event_type = ?", request.EventType)
@@ -218,8 +218,8 @@ func (tc *EventController) GetEvents(c *gin.Context) {
 			EventType:  event.EventType,
 			EventName:  event.EventName,
 			Payloads:   event.Payloads,
-			Timestamp:  event.Timestamp,
-			ReceivedAt: event.ReceivedAt,
+			Timestamp:  event.Timestamp.Format(time.RFC3339),
+			ReceivedAt: event.ReceivedAt.Format(time.RFC3339),
 		}
 	}
 
@@ -264,8 +264,8 @@ func (tc *EventController) GetEvent(c *gin.Context) {
 		EventType:  event.EventType,
 		EventName:  event.EventName,
 		Payloads:   event.Payloads,
-		Timestamp:  event.Timestamp,
-		ReceivedAt: event.ReceivedAt,
+		Timestamp:  event.Timestamp.Format(time.RFC3339),
+		ReceivedAt: event.ReceivedAt.Format(time.RFC3339),
 	}
 
 	c.JSON(http.StatusOK, resultResponse)

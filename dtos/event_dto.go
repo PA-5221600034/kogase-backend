@@ -27,8 +27,8 @@ type RecordEventsResponse struct {
 
 type GetEventsRequestQuery struct {
 	ProjectID string `form:"project_id" json:"project_id,omitempty"`
-	StartDate string `form:"start_date" json:"start_date,omitempty"`
-	EndDate   string `form:"end_date" json:"end_date,omitempty"`
+	FromDate  string `form:"from_date" json:"from_date,omitempty"`
+	ToDate    string `form:"to_date" json:"to_date,omitempty"`
 	EventType string `form:"event_type" json:"event_type,omitempty"`
 	EventName string `form:"event_name" json:"event_name,omitempty"`
 	Limit     int    `form:"limit" json:"limit,omitempty"`
@@ -49,6 +49,6 @@ type GetEventResponse struct {
 	EventType  string                 `json:"event_type"`
 	EventName  string                 `json:"event_name"`
 	Payloads   map[string]interface{} `json:"payloads"`
-	Timestamp  time.Time              `json:"timestamp"`
-	ReceivedAt time.Time              `json:"received_at"`
+	Timestamp  string                 `json:"timestamp"`
+	ReceivedAt string                 `json:"received_at"`
 }
