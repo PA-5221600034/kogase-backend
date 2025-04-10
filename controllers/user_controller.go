@@ -84,7 +84,7 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 	}
 	for i, user := range users {
 		resultResponse.Users[i] = dtos.GetUserResponse{
-			UserID: user.ID,
+			UserID: user.ID.String(),
 			Email:  user.Email,
 			Name:   user.Name,
 		}
@@ -116,7 +116,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 
 	resultResponse := dtos.GetUserResponseDetail{
 		GetUserResponse: dtos.GetUserResponse{
-			UserID: user.ID,
+			UserID: user.ID.String(),
 			Email:  user.Email,
 			Name:   user.Name,
 		},

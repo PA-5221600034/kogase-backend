@@ -2,7 +2,6 @@ package dtos
 
 import (
 	"github.com/atqamz/kogase-backend/models"
-	"github.com/google/uuid"
 )
 
 type CreateUserRequest struct {
@@ -21,9 +20,9 @@ type GetUsersResponse struct {
 }
 
 type GetUserResponse struct {
-	UserID uuid.UUID `json:"user_id"`
-	Email  string    `json:"email"`
-	Name   string    `json:"name"`
+	UserID string `json:"user_id"`
+	Email  string `json:"email"`
+	Name   string `json:"name"`
 }
 
 type GetUserResponseDetail struct {

@@ -140,7 +140,7 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 	}
 
 	query := sc.DB.Model(&models.Session{})
-	if request.ProjectID != uuid.Nil {
+	if request.ProjectID != "" {
 		query = query.Where("project_id = ?", request.ProjectID)
 	}
 	if !request.FromDate.IsZero() {
@@ -191,7 +191,7 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 	var sessionsDTO []dtos.GetSessionResponse
 	for _, session := range sessions {
 		sessionsDTO = append(sessionsDTO, dtos.GetSessionResponse{
-			SessionID: session.ID,
+			SessionID: session.ID.String(),
 			BeginAt:   session.BeginAt,
 			EndAt:     session.EndAt,
 			Duration:  session.Duration,
@@ -233,7 +233,7 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 	}
 
 	resultResponse := dtos.GetSessionResponse{
-		SessionID: session.ID,
+		SessionID: session.ID.String(),
 		BeginAt:   session.BeginAt,
 		EndAt:     session.EndAt,
 		Duration:  session.Duration,

@@ -7,7 +7,6 @@ import (
 	"github.com/atqamz/kogase-backend/dtos"
 	"github.com/atqamz/kogase-backend/models"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -38,7 +37,7 @@ func (ac *AnalyticsController) GetAnalytics(c *gin.Context) {
 	}
 
 	sessionQuery := ac.DB.Model(&models.Session{})
-	if request.ProjectID != uuid.Nil {
+	if request.ProjectID != "" {
 		sessionQuery = sessionQuery.Where("project_id = ?", request.ProjectID)
 	}
 	if !request.FromDate.IsZero() {
@@ -77,7 +76,7 @@ func (ac *AnalyticsController) GetAnalytics(c *gin.Context) {
 	}
 
 	eventQuery := ac.DB.Model(&models.Event{})
-	if request.ProjectID != uuid.Nil {
+	if request.ProjectID != "" {
 		eventQuery = eventQuery.Where("project_id = ?", request.ProjectID)
 	}
 	if !request.FromDate.IsZero() {

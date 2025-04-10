@@ -75,7 +75,7 @@ func (dc *DeviceController) CreateOrUpdateDevice(c *gin.Context) {
 		}
 
 		resultResponse := dtos.CreateOrUpdateDeviceResponse{
-			DeviceID:        device.ID,
+			DeviceID:        device.ID.String(),
 			Identifier:      device.Identifier,
 			Platform:        device.Platform,
 			PlatformVersion: device.PlatformVersion,
@@ -131,7 +131,7 @@ func (dc *DeviceController) CreateOrUpdateDevice(c *gin.Context) {
 	}
 
 	resultResponse := dtos.CreateOrUpdateDeviceResponse{
-		DeviceID:        newDevice.ID,
+		DeviceID:        newDevice.ID.String(),
 		Identifier:      newDevice.Identifier,
 		Platform:        newDevice.Platform,
 		PlatformVersion: newDevice.PlatformVersion,
@@ -204,7 +204,7 @@ func (dc *DeviceController) GetDevices(c *gin.Context) {
 	deviceResponses := make([]dtos.GetDeviceResponse, len(devices))
 	for i, device := range devices {
 		deviceResponses[i] = dtos.GetDeviceResponse{
-			DeviceID:        device.ID,
+			DeviceID:        device.ID.String(),
 			Identifier:      device.Identifier,
 			Platform:        device.Platform,
 			PlatformVersion: device.PlatformVersion,
@@ -257,7 +257,7 @@ func (dc *DeviceController) GetDevice(c *gin.Context) {
 	}
 
 	resultResponse := dtos.GetDeviceResponse{
-		DeviceID:        device.ID,
+		DeviceID:        device.ID.String(),
 		Identifier:      device.Identifier,
 		Platform:        device.Platform,
 		PlatformVersion: device.PlatformVersion,

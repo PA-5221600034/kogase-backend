@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/atqamz/kogase-backend/models"
-	"github.com/google/uuid"
 )
 
 type CreateOrUpdateDeviceRequest struct {
@@ -15,7 +14,7 @@ type CreateOrUpdateDeviceRequest struct {
 }
 
 type CreateOrUpdateDeviceResponse struct {
-	DeviceID        uuid.UUID `json:"device_id"`
+	DeviceID        string    `json:"device_id"`
 	Identifier      string    `json:"identifier"`
 	Platform        string    `json:"platform"`
 	PlatformVersion string    `json:"platform_version"`
@@ -40,7 +39,7 @@ type GetDevicesResponse struct {
 }
 
 type GetDeviceResponse struct {
-	DeviceID        uuid.UUID `json:"device_id"`
+	DeviceID        string    `json:"device_id"`
 	Identifier      string    `json:"identifier"`
 	Platform        string    `json:"platform"`
 	PlatformVersion string    `json:"platform_version"`

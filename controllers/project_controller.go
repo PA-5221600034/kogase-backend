@@ -57,11 +57,11 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 	}
 
 	resultResponse := dtos.CreateProjectResponse{
-		ProjectID: project.ID,
+		ProjectID: project.ID.String(),
 		Name:      project.Name,
 		ApiKey:    project.ApiKey,
 		Owner: dtos.OwnerDto{
-			ID:    project.Owner.ID,
+			ID:    project.Owner.ID.String(),
 			Email: project.Owner.Email,
 			Name:  project.Owner.Name,
 		},
@@ -95,11 +95,11 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 	}
 	for i, project := range projects {
 		resultResponse.Projects[i] = dtos.GetProjectResponse{
-			ProjectID: project.ID,
+			ProjectID: project.ID.String(),
 			Name:      project.Name,
 			ApiKey:    project.ApiKey,
 			Owner: dtos.OwnerDto{
-				ID:    project.Owner.ID,
+				ID:    project.Owner.ID.String(),
 				Email: project.Owner.Email,
 				Name:  project.Owner.Name,
 			},
@@ -142,11 +142,11 @@ func (pc *ProjectController) GetProject(c *gin.Context) {
 
 	resultResponse := dtos.GetProjectResponseDetail{
 		GetProjectResponse: dtos.GetProjectResponse{
-			ProjectID: project.ID,
+			ProjectID: project.ID.String(),
 			Name:      project.Name,
 			ApiKey:    project.ApiKey,
 			Owner: dtos.OwnerDto{
-				ID:    project.Owner.ID,
+				ID:    project.Owner.ID.String(),
 				Email: project.Owner.Email,
 				Name:  project.Owner.Name,
 			},
@@ -211,11 +211,11 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	}
 
 	resultResponse := dtos.UpdateProjectResponse{
-		ProjectID: project.ID,
+		ProjectID: project.ID.String(),
 		Name:      project.Name,
 		ApiKey:    project.ApiKey,
 		Owner: dtos.OwnerDto{
-			ID:    project.Owner.ID,
+			ID:    project.Owner.ID.String(),
 			Email: project.Owner.Email,
 			Name:  project.Owner.Name,
 		},
@@ -312,11 +312,11 @@ func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
 	}
 
 	resultResponse := dtos.GetProjectResponse{
-		ProjectID: project.ID,
+		ProjectID: project.ID.String(),
 		Name:      project.Name,
 		ApiKey:    project.ApiKey,
 		Owner: dtos.OwnerDto{
-			ID:    project.Owner.ID,
+			ID:    project.Owner.ID.String(),
 			Email: project.Owner.Email,
 			Name:  project.Owner.Name,
 		},
@@ -348,11 +348,11 @@ func (pc *ProjectController) GetProjectWithApiKey(c *gin.Context) {
 
 	resultResponse := dtos.GetProjectResponseDetail{
 		GetProjectResponse: dtos.GetProjectResponse{
-			ProjectID: project.ID,
+			ProjectID: project.ID.String(),
 			Name:      project.Name,
 			ApiKey:    project.ApiKey,
 			Owner: dtos.OwnerDto{
-				ID:    project.Owner.ID,
+				ID:    project.Owner.ID.String(),
 				Email: project.Owner.Email,
 				Name:  project.Owner.Name,
 			},

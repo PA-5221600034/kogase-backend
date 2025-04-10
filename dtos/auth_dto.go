@@ -2,8 +2,6 @@ package dtos
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type LoginRequest struct {
@@ -17,7 +15,7 @@ type LoginResponse struct {
 }
 
 type MeResponse struct {
-	ID        uuid.UUID `json:"id"`
+	ID        string    `json:"id"`
 	Email     string    `json:"email"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`

@@ -2,8 +2,6 @@ package dtos
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type BeginSessionRequest struct {
@@ -23,7 +21,7 @@ type EndSessionResponse struct {
 }
 
 type GetSessionsRequestQuery struct {
-	ProjectID uuid.UUID `form:"project_id" json:"project_id,omitempty"`
+	ProjectID string    `form:"project_id" json:"project_id,omitempty"`
 	FromDate  time.Time `form:"from_date" json:"from_date,omitempty"`
 	ToDate    time.Time `form:"to_date" json:"to_date,omitempty"`
 	Limit     int       `form:"limit,default=20" json:"limit,omitempty"`
@@ -38,11 +36,11 @@ type GetSessionsResponse struct {
 }
 
 type GetSessionRequest struct {
-	SessionID uuid.UUID `json:"session_id" binding:"required"`
+	SessionID string `json:"session_id" binding:"required"`
 }
 
 type GetSessionResponse struct {
-	SessionID uuid.UUID     `json:"session_id"`
+	SessionID string        `json:"session_id"`
 	BeginAt   time.Time     `json:"begin_at"`
 	EndAt     time.Time     `json:"end_at"`
 	Duration  time.Duration `json:"duration"`

@@ -97,7 +97,7 @@ func (ac *AuthController) Me(c *gin.Context) {
 	}
 
 	resultResponse := dtos.MeResponse{
-		ID:        user.ID,
+		ID:        user.ID.String(),
 		Email:     user.Email,
 		Name:      user.Name,
 		CreatedAt: user.CreatedAt,

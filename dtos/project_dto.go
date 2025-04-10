@@ -2,7 +2,6 @@ package dtos
 
 import (
 	"github.com/atqamz/kogase-backend/models"
-	"github.com/google/uuid"
 )
 
 type CreateProjectRequest struct {
@@ -10,10 +9,10 @@ type CreateProjectRequest struct {
 }
 
 type CreateProjectResponse struct {
-	ProjectID uuid.UUID `json:"project_id"`
-	Name      string    `json:"name"`
-	ApiKey    string    `json:"api_key"`
-	Owner     OwnerDto  `json:"owner"`
+	ProjectID string   `json:"project_id"`
+	Name      string   `json:"name"`
+	ApiKey    string   `json:"api_key"`
+	Owner     OwnerDto `json:"owner"`
 }
 
 type GetProjectsResponse struct {
@@ -21,10 +20,10 @@ type GetProjectsResponse struct {
 }
 
 type GetProjectResponse struct {
-	ProjectID uuid.UUID `json:"project_id"`
-	Name      string    `json:"name"`
-	ApiKey    string    `json:"api_key"`
-	Owner     OwnerDto  `json:"owner"`
+	ProjectID string   `json:"project_id"`
+	Name      string   `json:"name"`
+	ApiKey    string   `json:"api_key"`
+	Owner     OwnerDto `json:"owner"`
 }
 
 type GetProjectResponseDetail struct {
@@ -38,10 +37,10 @@ type UpdateProjectRequest struct {
 }
 
 type UpdateProjectResponse struct {
-	ProjectID uuid.UUID `json:"project_id"`
-	Name      string    `json:"name"`
-	ApiKey    string    `json:"api_key"`
-	Owner     OwnerDto  `json:"owner"`
+	ProjectID string   `json:"project_id"`
+	Name      string   `json:"name"`
+	ApiKey    string   `json:"api_key"`
+	Owner     OwnerDto `json:"owner"`
 }
 
 type DeleteProjectResponse struct {
@@ -49,7 +48,7 @@ type DeleteProjectResponse struct {
 }
 
 type OwnerDto struct {
-	ID    uuid.UUID `json:"id"`
-	Email string    `json:"email"`
-	Name  string    `json:"name"`
+	ID    string `json:"id"`
+	Email string `json:"email"`
+	Name  string `json:"name"`
 }
