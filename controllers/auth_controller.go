@@ -18,6 +18,18 @@ func NewAuthController(db *gorm.DB) *AuthController {
 	return &AuthController{DB: db}
 }
 
+// Login godoc
+// @Summary User login
+// @Description Authenticate user with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body dtos.LoginRequest true "Login credentials"
+// @Success 200 {object} dtos.LoginResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /auth/login [post]
 func (ac *AuthController) Login(c *gin.Context) {
 	var request dtos.LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -77,6 +89,15 @@ func (ac *AuthController) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// Me godoc
+// @Summary Get current user info
+// @Description Returns information about the currently authenticated user
+// @Tags auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dtos.MeResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Router /auth/me [get]
 func (ac *AuthController) Me(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -107,6 +128,15 @@ func (ac *AuthController) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// Logout godoc
+// @Summary User logout
+// @Description Invalidate the current auth token
+// @Tags auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dtos.LogoutResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Router /auth/logout [post]
 func (ac *AuthController) Logout(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {

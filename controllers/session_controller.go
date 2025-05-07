@@ -19,6 +19,20 @@ func NewSessionController(db *gorm.DB) *SessionController {
 	return &SessionController{DB: db}
 }
 
+// BeginSession godoc
+// @Summary Begin a new session
+// @Description Start a new game session for a device
+// @Tags sessions
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param session body dtos.BeginSessionRequest true "Session details"
+// @Success 201 {object} dtos.BeginSessionResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /sessions/begin [post]
 func (sc *SessionController) BeginSession(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
@@ -70,6 +84,20 @@ func (sc *SessionController) BeginSession(c *gin.Context) {
 	c.JSON(http.StatusCreated, resultResponse)
 }
 
+// EndSession godoc
+// @Summary End a session
+// @Description End an existing game session
+// @Tags sessions
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param session body dtos.EndSessionRequest true "Session to end"
+// @Success 200 {object} dtos.EndSessionResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /sessions/end [post]
 func (sc *SessionController) EndSession(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
@@ -120,6 +148,22 @@ func (sc *SessionController) EndSession(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// GetSessions godoc
+// @Summary Get sessions
+// @Description Retrieve all sessions with filtering and pagination
+// @Tags sessions
+// @Produce json
+// @Security BearerAuth
+// @Param project_id query string false "Filter by project ID"
+// @Param from_date query string false "Filter by start date (RFC3339)"
+// @Param to_date query string false "Filter by end date (RFC3339)"
+// @Param limit query int false "Limit results"
+// @Param offset query int false "Offset results"
+// @Success 200 {object} dtos.GetSessionsResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /sessions [get]
 func (sc *SessionController) GetSessions(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -194,7 +238,7 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 			SessionID: session.ID.String(),
 			BeginAt:   session.BeginAt,
 			EndAt:     session.EndAt,
-			Duration:  session.Duration,
+			Duration:  session.Duration.Nanoseconds(),
 		})
 	}
 
@@ -208,6 +252,17 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// GetSession godoc
+// @Summary Get session by ID
+// @Description Retrieve a specific session by its ID
+// @Tags sessions
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Session ID"
+// @Success 200 {object} dtos.GetSessionResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Router /sessions/{id} [get]
 func (sc *SessionController) GetSession(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -236,7 +291,7 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 		SessionID: session.ID.String(),
 		BeginAt:   session.BeginAt,
 		EndAt:     session.EndAt,
-		Duration:  session.Duration,
+		Duration:  session.Duration.Nanoseconds(),
 	}
 
 	c.JSON(http.StatusOK, resultResponse)

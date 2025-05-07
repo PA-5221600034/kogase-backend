@@ -19,6 +19,19 @@ func NewEventController(db *gorm.DB) *EventController {
 	return &EventController{DB: db}
 }
 
+// RecordEvent godoc
+// @Summary Record a single event
+// @Description Record a new telemetry event from a device
+// @Tags events
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param event body dtos.RecordEventRequest true "Event details"
+// @Success 201 {object} dtos.RecordEventResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /events [post]
 func (tc *EventController) RecordEvent(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
@@ -84,6 +97,19 @@ func (tc *EventController) RecordEvent(c *gin.Context) {
 	c.JSON(http.StatusCreated, resultResponse)
 }
 
+// RecordEvents godoc
+// @Summary Record multiple events
+// @Description Record a batch of telemetry events from a device
+// @Tags events
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param events body dtos.RecordEventsRequest true "Batch of events"
+// @Success 201 {object} dtos.RecordEventsResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /events/batch [post]
 func (tc *EventController) RecordEvents(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
@@ -157,6 +183,24 @@ func (tc *EventController) RecordEvents(c *gin.Context) {
 	c.JSON(http.StatusCreated, resultResponse)
 }
 
+// GetEvents godoc
+// @Summary Get events
+// @Description Retrieve events with filtering and pagination
+// @Tags events
+// @Produce json
+// @Security BearerAuth
+// @Param project_id query string false "Filter by project ID"
+// @Param event_type query string false "Filter by event type"
+// @Param event_name query string false "Filter by event name"
+// @Param from_date query string false "Filter by start date (RFC3339)"
+// @Param to_date query string false "Filter by end date (RFC3339)"
+// @Param limit query int false "Limit results"
+// @Param offset query int false "Offset results"
+// @Success 200 {object} dtos.GetEventsResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /events [get]
 func (tc *EventController) GetEvents(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -231,6 +275,18 @@ func (tc *EventController) GetEvents(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// GetEvent godoc
+// @Summary Get event by ID
+// @Description Retrieve a specific event by its ID
+// @Tags events
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Success 200 {object} dtos.GetEventResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Router /events/{id} [get]
 func (tc *EventController) GetEvent(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {

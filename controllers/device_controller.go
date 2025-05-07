@@ -20,6 +20,20 @@ func NewDeviceController(db *gorm.DB) *DeviceController {
 	return &DeviceController{DB: db}
 }
 
+// CreateOrUpdateDevice godoc
+// @Summary Create or update device
+// @Description Create a new device or update an existing one
+// @Tags devices
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param device body dtos.CreateOrUpdateDeviceRequest true "Device details"
+// @Success 200 {object} dtos.CreateOrUpdateDeviceResponse
+// @Success 201 {object} dtos.CreateOrUpdateDeviceResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /devices [post]
 func (dc *DeviceController) CreateOrUpdateDevice(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {
@@ -145,6 +159,20 @@ func (dc *DeviceController) CreateOrUpdateDevice(c *gin.Context) {
 	c.JSON(http.StatusCreated, resultResponse)
 }
 
+// GetDevices godoc
+// @Summary Get all devices
+// @Description Retrieve a list of all devices with pagination
+// @Tags devices
+// @Produce json
+// @Security BearerAuth
+// @Param platform query string false "Filter by platform"
+// @Param limit query int false "Limit results (default 20, max 100)"
+// @Param offset query int false "Offset results (default 0)"
+// @Success 200 {object} dtos.GetDevicesResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /devices [get]
 func (dc *DeviceController) GetDevices(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -226,6 +254,18 @@ func (dc *DeviceController) GetDevices(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// GetDevice godoc
+// @Summary Get a device by ID
+// @Description Retrieve a specific device by its ID
+// @Tags devices
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Device ID"
+// @Success 200 {object} dtos.GetDeviceResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Router /devices/{id} [get]
 func (dc *DeviceController) GetDevice(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -271,6 +311,19 @@ func (dc *DeviceController) GetDevice(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// DeleteDevice godoc
+// @Summary Delete a device
+// @Description Delete a device by its ID
+// @Tags devices
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Device ID"
+// @Success 200 {object} dtos.DeleteDeviceResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /devices/{id} [delete]
 func (dc *DeviceController) DeleteDevice(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {

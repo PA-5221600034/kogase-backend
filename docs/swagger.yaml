@@ -1,96 +1,73 @@
 basePath: /api/v1
 definitions:
-  controllers.CreateProjectRequest:
+  dtos.BeginSessionRequest:
+    properties:
+      identifier:
+        type: string
+    required:
+    - identifier
+    type: object
+  dtos.BeginSessionResponse:
+    properties:
+      session_id:
+        type: string
+    type: object
+  dtos.CreateOrUpdateDeviceRequest:
+    properties:
+      app_version:
+        type: string
+      identifier:
+        type: string
+      platform:
+        type: string
+      platform_version:
+        type: string
+    required:
+    - app_version
+    - identifier
+    - platform
+    - platform_version
+    type: object
+  dtos.CreateOrUpdateDeviceResponse:
+    properties:
+      app_version:
+        type: string
+      country:
+        type: string
+      device_id:
+        type: string
+      first_seen:
+        type: string
+      identifier:
+        type: string
+      ip_address:
+        type: string
+      last_seen:
+        type: string
+      platform:
+        type: string
+      platform_version:
+        type: string
+    type: object
+  dtos.CreateProjectRequest:
     properties:
       name:
         type: string
     required:
     - name
     type: object
-  controllers.EventRequest:
+  dtos.CreateProjectResponse:
     properties:
-      app_version:
+      api_key:
         type: string
-      device_id:
+      name:
         type: string
-      event_name:
+      owner:
+        $ref: '#/definitions/dtos.OwnerDto'
+      project_id:
         type: string
-      event_type:
-        type: string
-      os_version:
-        type: string
-      parameters:
-        additionalProperties: true
-        type: object
-      platform:
-        type: string
-      timestamp:
-        type: string
-    required:
-    - app_version
-    - device_id
-    - event_name
-    - event_type
-    - os_version
-    - platform
     type: object
-  controllers.EventsRequest:
-    properties:
-      events:
-        items:
-          $ref: '#/definitions/controllers.EventRequest'
-        type: array
-    required:
-    - events
-    type: object
-  controllers.InstallationRequest:
-    properties:
-      app_version:
-        type: string
-      device_id:
-        type: string
-      os_version:
-        type: string
-      platform:
-        type: string
-      properties:
-        additionalProperties: {}
-        type: object
-    required:
-    - app_version
-    - device_id
-    - os_version
-    - platform
-    type: object
-  controllers.LoginRequest:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  controllers.LoginResponse:
-    properties:
-      expires_at:
-        type: string
-      token:
-        type: string
-      user:
-        properties:
-          email:
-            type: string
-          id:
-            type: string
-          name:
-            type: string
-          role:
-            type: string
-        type: object
-    type: object
-  controllers.RegisterRequest:
+  dtos.CreateUserRequest:
     properties:
       email:
         type: string
@@ -104,18 +81,342 @@ definitions:
     - name
     - password
     type: object
+  dtos.CreateUserResponse:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dtos.DeleteDeviceResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dtos.DeleteProjectResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dtos.DeleteUserResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dtos.EndSessionRequest:
+    properties:
+      session_id:
+        type: string
+    required:
+    - session_id
+    type: object
+  dtos.EndSessionResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dtos.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  dtos.GetAnalyticsResponse:
+    properties:
+      dau:
+        type: integer
+      mau:
+        type: integer
+      total_duration:
+        type: integer
+      total_installs:
+        type: integer
+    required:
+    - dau
+    - mau
+    - total_duration
+    - total_installs
+    type: object
+  dtos.GetDeviceResponse:
+    properties:
+      app_version:
+        type: string
+      country:
+        type: string
+      device_id:
+        type: string
+      first_seen:
+        type: string
+      identifier:
+        type: string
+      ip_address:
+        type: string
+      last_seen:
+        type: string
+      platform:
+        type: string
+      platform_version:
+        type: string
+    type: object
+  dtos.GetDevicesResponse:
+    properties:
+      devices:
+        items:
+          $ref: '#/definitions/dtos.GetDeviceResponse'
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total_count:
+        type: integer
+    type: object
+  dtos.GetEventResponse:
+    properties:
+      event_id:
+        type: string
+      event_name:
+        type: string
+      event_type:
+        type: string
+      payloads:
+        additionalProperties: true
+        type: object
+      received_at:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  dtos.GetEventsResponse:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/dtos.GetEventResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  dtos.GetProjectResponse:
+    properties:
+      api_key:
+        type: string
+      name:
+        type: string
+      owner:
+        $ref: '#/definitions/dtos.OwnerDto'
+      project_id:
+        type: string
+    type: object
+  dtos.GetProjectResponseDetail:
+    properties:
+      api_key:
+        type: string
+      devices:
+        items:
+          $ref: '#/definitions/models.Device'
+        type: array
+      events:
+        items:
+          $ref: '#/definitions/models.Event'
+        type: array
+      name:
+        type: string
+      owner:
+        $ref: '#/definitions/dtos.OwnerDto'
+      project_id:
+        type: string
+    type: object
+  dtos.GetProjectsResponse:
+    properties:
+      projects:
+        items:
+          $ref: '#/definitions/dtos.GetProjectResponse'
+        type: array
+    type: object
+  dtos.GetSessionResponse:
+    properties:
+      begin_at:
+        type: string
+      duration:
+        description: Duration in nanoseconds
+        type: integer
+      end_at:
+        type: string
+      session_id:
+        type: string
+    type: object
+  dtos.GetSessionsResponse:
+    properties:
+      limit:
+        type: integer
+      offset:
+        type: integer
+      sessions:
+        items:
+          $ref: '#/definitions/dtos.GetSessionResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  dtos.GetUserResponse:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dtos.GetUserResponseDetail:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      projects:
+        items:
+          $ref: '#/definitions/models.Project'
+        type: array
+      user_id:
+        type: string
+    type: object
+  dtos.GetUsersResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/dtos.GetUserResponse'
+        type: array
+    type: object
+  dtos.HealthResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  dtos.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dtos.LoginResponse:
+    properties:
+      expires_at:
+        type: string
+      token:
+        type: string
+    type: object
+  dtos.LogoutResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dtos.MeResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dtos.OwnerDto:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  dtos.RecordEventRequest:
+    properties:
+      event_name:
+        type: string
+      event_type:
+        type: string
+      identifier:
+        type: string
+      payloads:
+        additionalProperties: true
+        type: object
+      timestamp:
+        type: string
+    required:
+    - event_name
+    - event_type
+    - identifier
+    type: object
+  dtos.RecordEventResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  dtos.RecordEventsRequest:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/dtos.RecordEventRequest'
+        type: array
+    required:
+    - events
+    type: object
+  dtos.RecordEventsResponse:
+    properties:
+      count:
+        type: integer
+      message:
+        type: string
+    type: object
+  dtos.UpdateProjectRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  dtos.UpdateProjectResponse:
+    properties:
+      api_key:
+        type: string
+      name:
+        type: string
+      owner:
+        $ref: '#/definitions/dtos.OwnerDto'
+      project_id:
+        type: string
+    type: object
+  dtos.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  dtos.UpdateUserResponse:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+    type: object
   models.Device:
     properties:
       app_version:
-        description: Game version
+        description: App version
         type: string
       country:
         description: Country based on IP (optional)
         type: string
       created_at:
-        type: string
-      device_id:
-        description: Client-generated device identifier
         type: string
       events:
         items:
@@ -126,26 +427,25 @@ definitions:
         type: string
       id:
         type: string
+      identifier:
+        description: Client-generated device identifier
+        type: string
       ip_address:
         description: Hashed/anonymized IP address
         type: string
       last_seen:
         description: Last session timestamp
         type: string
-      os_version:
-        description: e.g., "10.0", "Android 11"
-        type: string
       platform:
         description: iOS, Android, Windows, etc.
+        type: string
+      platform_version:
+        description: e.g., "10.0", "Android 11"
         type: string
       project_id:
         type: string
       updated_at:
         type: string
-    type: object
-  models.Dimensions:
-    additionalProperties:
-      type: string
     type: object
   models.Event:
     properties:
@@ -157,13 +457,13 @@ definitions:
         description: For custom events
         type: string
       event_type:
-        $ref: '#/definitions/models.EventType'
+        type: string
       id:
         type: string
-      parameters:
+      payloads:
         allOf:
-        - $ref: '#/definitions/models.Parameters'
-        description: JSON parameters
+        - $ref: '#/definitions/models.Payloads'
+        description: JSON payloads
       project_id:
         type: string
       received_at:
@@ -175,82 +475,12 @@ definitions:
       updated_at:
         type: string
     type: object
-  models.EventType:
-    enum:
-    - session_start
-    - session_end
-    - install
-    - uninstall
-    - custom
-    type: string
-    x-enum-varnames:
-    - SessionStart
-    - SessionEnd
-    - Install
-    - Uninstall
-    - Custom
-  models.Metric:
-    properties:
-      created_at:
-        type: string
-      dimensions:
-        $ref: '#/definitions/models.Dimensions'
-      id:
-        type: string
-      metric_type:
-        $ref: '#/definitions/models.MetricType'
-      period:
-        $ref: '#/definitions/models.PeriodType'
-      period_start:
-        type: string
-      project_id:
-        type: string
-      updated_at:
-        type: string
-      value:
-        type: number
-    type: object
-  models.MetricType:
-    enum:
-    - dau
-    - mau
-    - new_users
-    - session_count
-    - session_length
-    - event_count
-    - retention_rate
-    type: string
-    x-enum-varnames:
-    - DailyActiveUsers
-    - MonthlyActiveUsers
-    - NewUsers
-    - SessionCount
-    - SessionLength
-    - EventCount
-    - RetentionRate
-  models.Parameters:
+  models.Payloads:
     additionalProperties: true
     type: object
-  models.PeriodType:
-    enum:
-    - hourly
-    - daily
-    - weekly
-    - monthly
-    - yearly
-    - total
-    type: string
-    x-enum-varnames:
-    - Hourly
-    - Daily
-    - Weekly
-    - Monthly
-    - Yearly
-    - Total
   models.Project:
     properties:
       api_key:
-        description: Not always exposed in responses
         type: string
       created_at:
         type: string
@@ -266,14 +496,12 @@ definitions:
         type: string
       name:
         type: string
+      owner:
+        $ref: '#/definitions/models.User'
       owner_id:
         type: string
       updated_at:
         type: string
-      users:
-        items:
-          $ref: '#/definitions/models.User'
-        type: array
     type: object
   models.User:
     properties:
@@ -289,9 +517,6 @@ definitions:
         items:
           $ref: '#/definitions/models.Project'
         type: array
-      role:
-        description: '''admin'' or ''developer'''
-        type: string
       updated_at:
         type: string
     type: object
@@ -309,147 +534,22 @@ info:
   title: Kogase Telemetry API
   version: "1.0"
 paths:
-  /analytics/devices:
+  /analytics:
     get:
-      consumes:
-      - application/json
-      description: Get devices
+      description: Retrieve analytics data for a project including DAU, MAU, total
+        duration, and total installs
       parameters:
-      - description: Platform
+      - description: Filter by project ID
         in: query
-        name: platform
+        name: project_id
         type: string
-      - description: First seen date (ISO 8601)
+      - description: Filter by start date (RFC3339)
         in: query
-        name: start_date
+        name: from_date
         type: string
-      - description: Last seen date (ISO 8601)
+      - description: Filter by end date (RFC3339)
         in: query
-        name: end_date
-        type: string
-      - description: Limit (default 100)
-        in: query
-        name: limit
-        type: integer
-      - description: Offset (default 0)
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.Device'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Get devices
-      tags:
-      - analytics
-  /analytics/events:
-    get:
-      consumes:
-      - application/json
-      description: Get events
-      parameters:
-      - description: Event type
-        in: query
-        name: event_type
-        type: string
-      - description: Event name
-        in: query
-        name: event_name
-        type: string
-      - description: Start date (ISO 8601)
-        in: query
-        name: start_date
-        type: string
-      - description: End date (ISO 8601)
-        in: query
-        name: end_date
-        type: string
-      - description: Device ID
-        in: query
-        name: device_id
-        type: string
-      - description: Platform
-        in: query
-        name: platform
-        type: string
-      - description: Limit (default 100)
-        in: query
-        name: limit
-        type: integer
-      - description: Offset (default 0)
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.Event'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Get events
-      tags:
-      - analytics
-  /analytics/metrics:
-    get:
-      consumes:
-      - application/json
-      description: Get analytics metrics
-      parameters:
-      - description: Metric type
-        in: query
-        name: metric_type
-        type: string
-      - description: Start date (ISO 8601)
-        in: query
-        name: start_date
-        type: string
-      - description: End date (ISO 8601)
-        in: query
-        name: end_date
-        type: string
-      - description: Period (hourly, daily, weekly, monthly, yearly, total)
-        in: query
-        name: period
-        type: string
-      - description: Dimensions to group by
-        in: query
-        name: dimensions
+        name: to_date
         type: string
       produces:
       - application/json
@@ -457,207 +557,491 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Metric'
-            type: array
+            $ref: '#/definitions/dtos.GetAnalyticsResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Get metrics
+      summary: Get analytics data
       tags:
       - analytics
   /auth/login:
     post:
       consumes:
       - application/json
-      description: Authenticate user and receive JWT token
+      description: Authenticate user with email and password
       parameters:
       - description: Login credentials
         in: body
-        name: credentials
+        name: user
         required: true
         schema:
-          $ref: '#/definitions/controllers.LoginRequest'
+          $ref: '#/definitions/dtos.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.LoginResponse'
+            $ref: '#/definitions/dtos.LoginResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Login user
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: User login
       tags:
       - auth
   /auth/logout:
     post:
-      consumes:
-      - application/json
-      description: Invalidate current JWT token
+      description: Invalidate the current auth token
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.LogoutResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Logout user
+      summary: User logout
       tags:
       - auth
   /auth/me:
     get:
-      consumes:
-      - application/json
-      description: Get current authenticated user information
+      description: Returns information about the currently authenticated user
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.User'
+            $ref: '#/definitions/dtos.MeResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Get current user
+      summary: Get current user info
       tags:
       - auth
-  /auth/register:
+  /devices:
+    get:
+      description: Retrieve a list of all devices with pagination
+      parameters:
+      - description: Filter by platform
+        in: query
+        name: platform
+        type: string
+      - description: Limit results (default 20, max 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset results (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.GetDevicesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all devices
+      tags:
+      - devices
     post:
       consumes:
       - application/json
-      description: Register a new user account
+      description: Create a new device or update an existing one
       parameters:
-      - description: Registration details
+      - description: Device details
         in: body
-        name: credentials
+        name: device
         required: true
         schema:
-          $ref: '#/definitions/controllers.RegisterRequest'
+          $ref: '#/definitions/dtos.CreateOrUpdateDeviceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.CreateOrUpdateDeviceResponse'
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dtos.CreateOrUpdateDeviceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create or update device
+      tags:
+      - devices
+  /devices/{id}:
+    delete:
+      description: Delete a device by its ID
+      parameters:
+      - description: Device ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.DeleteDeviceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a device
+      tags:
+      - devices
+    get:
+      description: Retrieve a specific device by its ID
+      parameters:
+      - description: Device ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.GetDeviceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a device by ID
+      tags:
+      - devices
+  /events:
+    get:
+      description: Retrieve events with filtering and pagination
+      parameters:
+      - description: Filter by project ID
+        in: query
+        name: project_id
+        type: string
+      - description: Filter by event type
+        in: query
+        name: event_type
+        type: string
+      - description: Filter by event name
+        in: query
+        name: event_name
+        type: string
+      - description: Filter by start date (RFC3339)
+        in: query
+        name: from_date
+        type: string
+      - description: Filter by end date (RFC3339)
+        in: query
+        name: to_date
+        type: string
+      - description: Limit results
+        in: query
+        name: limit
+        type: integer
+      - description: Offset results
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.GetEventsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get events
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      description: Record a new telemetry event from a device
+      parameters:
+      - description: Event details
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.RecordEventRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.User'
+            $ref: '#/definitions/dtos.RecordEventResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Conflict
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Register new user
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Record a single event
       tags:
-      - auth
-  /projects:
+      - events
+  /events/{id}:
     get:
-      consumes:
-      - application/json
-      description: Get all projects accessible by the current user
+      description: Retrieve a specific event by its ID
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Project'
-            type: array
+            $ref: '#/definitions/dtos.GetEventResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: List projects
+      summary: Get event by ID
+      tags:
+      - events
+  /events/batch:
+    post:
+      consumes:
+      - application/json
+      description: Record a batch of telemetry events from a device
+      parameters:
+      - description: Batch of events
+        in: body
+        name: events
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.RecordEventsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dtos.RecordEventsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Record multiple events
+      tags:
+      - events
+  /health:
+    get:
+      description: Check if the API is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.HealthResponse'
+      summary: Health check endpoint
+      tags:
+      - health
+  /health/apikey:
+    get:
+      description: Check if the API is running and verify API key
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.HealthResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Health check endpoint with API key authentication
+      tags:
+      - health
+  /projects:
+    get:
+      description: Retrieve a list of all projects
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.GetProjectsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all projects
       tags:
       - projects
     post:
       consumes:
       - application/json
-      description: Create a new project
+      description: Create a new telemetry project
       parameters:
       - description: Project details
         in: body
         name: project
         required: true
         schema:
-          $ref: '#/definitions/controllers.CreateProjectRequest'
+          $ref: '#/definitions/dtos.CreateProjectRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.Project'
+            $ref: '#/definitions/dtos.CreateProjectResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Create project
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Create new project
       tags:
       - projects
   /projects/{id}:
     delete:
-      consumes:
-      - application/json
-      description: Delete a project
+      description: Delete a project by its ID
       parameters:
       - description: Project ID
         in: path
@@ -670,42 +1054,30 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.DeleteProjectResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "403":
-          description: Forbidden
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Delete project
+      summary: Delete a project
       tags:
       - projects
     get:
-      consumes:
-      - application/json
-      description: Get a specific project by ID
+      description: Retrieve a specific project by its ID
       parameters:
       - description: Project ID
         in: path
@@ -718,25 +1090,25 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Project'
+            $ref: '#/definitions/dtos.GetProjectResponseDetail'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Get project
+      summary: Get a project by ID
       tags:
       - projects
-    put:
+    patch:
       consumes:
       - application/json
       description: Update a project's details
@@ -746,101 +1118,43 @@ paths:
         name: id
         required: true
         type: string
-      - description: Project details
+      - description: Updated project details
         in: body
         name: project
         required: true
         schema:
-          $ref: '#/definitions/controllers.CreateProjectRequest'
+          $ref: '#/definitions/dtos.UpdateProjectRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Project'
+            $ref: '#/definitions/dtos.UpdateProjectResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "403":
-          description: Forbidden
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update project
+      summary: Update a project
       tags:
       - projects
   /projects/{id}/apikey:
-    get:
-      consumes:
-      - application/json
-      description: Get the API key for a project
-      parameters:
-      - description: Project ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "403":
-          description: Forbidden
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Get API key
-      tags:
-      - projects
     post:
-      consumes:
-      - application/json
-      description: Regenerate the API key for a project
+      description: Generate a new API key for a project
       parameters:
       - description: Project ID
         in: path
@@ -853,266 +1167,352 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.GetProjectResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "403":
-          description: Forbidden
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Regenerate API key
       tags:
       - projects
-  /sdk/installation:
-    post:
-      consumes:
-      - application/json
-      description: Record a new installation event
-      parameters:
-      - description: Installation data
-        in: body
-        name: installation
-        required: true
-        schema:
-          $ref: '#/definitions/controllers.InstallationRequest'
+  /projects/apikey:
+    get:
+      description: Get project details using an API key for authentication
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.GetProjectResponseDetail'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Record installation
+      summary: Get project with API key
       tags:
-      - sdk
-  /telemetry/events:
-    post:
-      consumes:
-      - application/json
-      description: Record a telemetry event
+      - projects
+  /sessions:
+    get:
+      description: Retrieve all sessions with filtering and pagination
       parameters:
-      - description: Event details
-        in: body
-        name: event
-        required: true
-        schema:
-          $ref: '#/definitions/controllers.EventRequest'
+      - description: Filter by project ID
+        in: query
+        name: project_id
+        type: string
+      - description: Filter by start date (RFC3339)
+        in: query
+        name: from_date
+        type: string
+      - description: Filter by end date (RFC3339)
+        in: query
+        name: to_date
+        type: string
+      - description: Limit results
+        in: query
+        name: limit
+        type: integer
+      - description: Offset results
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.GetSessionsResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
-      - ApiKeyAuth: []
-      summary: Record event
+      - BearerAuth: []
+      summary: Get sessions
       tags:
-      - telemetry
-  /telemetry/events/batch:
-    post:
-      consumes:
-      - application/json
-      description: Record multiple telemetry events in a batch
+      - sessions
+  /sessions/{id}:
+    get:
+      description: Retrieve a specific session by its ID
       parameters:
-      - description: Events batch
-        in: body
-        name: events
+      - description: Session ID
+        in: path
+        name: id
         required: true
-        schema:
-          $ref: '#/definitions/controllers.EventsRequest'
+        type: string
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.GetSessionResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
-      - ApiKeyAuth: []
-      summary: Record events batch
+      - BearerAuth: []
+      summary: Get session by ID
       tags:
-      - telemetry
-  /telemetry/install:
+      - sessions
+  /sessions/begin:
     post:
       consumes:
       - application/json
-      description: Record an installation event
+      description: Start a new game session for a device
       parameters:
-      - description: Install details
-        in: body
-        name: install
-        required: true
-        schema:
-          $ref: '#/definitions/controllers.EventRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - ApiKeyAuth: []
-      summary: Record install
-      tags:
-      - telemetry
-  /telemetry/session/end:
-    post:
-      consumes:
-      - application/json
-      description: End a session for a device
-      parameters:
-      - description: Session end details
+      - description: Session details
         in: body
         name: session
         required: true
         schema:
-          $ref: '#/definitions/controllers.EventRequest'
+          $ref: '#/definitions/dtos.BeginSessionRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.BeginSessionResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: End session
+      summary: Begin a new session
       tags:
-      - telemetry
-  /telemetry/session/start:
+      - sessions
+  /sessions/end:
     post:
       consumes:
       - application/json
-      description: Start a new session for a device
+      description: End an existing game session
       parameters:
-      - description: Session start details
+      - description: Session to end
         in: body
         name: session
         required: true
         schema:
-          $ref: '#/definitions/controllers.EventRequest'
+          $ref: '#/definitions/dtos.EndSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.EndSessionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: End a session
+      tags:
+      - sessions
+  /users:
+    get:
+      description: Retrieve a list of all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.GetUsersResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Register a new user account
+      parameters:
+      - description: User details
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateUserRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.CreateUserResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Create a new user
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      description: Delete the current user account
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.DeleteUserResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
       security:
-      - ApiKeyAuth: []
-      summary: Start session
+      - BearerAuth: []
+      summary: Delete user
       tags:
-      - telemetry
+      - users
+    get:
+      description: Retrieve detailed information about the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.GetUserResponseDetail'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: Update the current user's information
+      parameters:
+      - description: Updated user details
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.UpdateUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - users
 schemes:
 - http
 - https

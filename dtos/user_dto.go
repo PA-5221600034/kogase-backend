@@ -11,8 +11,9 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
+	UserID string `json:"user_id"`
+	Email  string `json:"email"`
+	Name   string `json:"name"`
 }
 
 type GetUsersResponse struct {

@@ -22,53 +22,38 @@
     "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
-        "/analytics/devices": {
+        "/analytics": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get devices",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Retrieve analytics data for a project including DAU, MAU, total duration, and total installs",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "analytics"
                 ],
-                "summary": "Get devices",
+                "summary": "Get analytics data",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Platform",
-                        "name": "platform",
+                        "description": "Filter by project ID",
+                        "name": "project_id",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "First seen date (ISO 8601)",
-                        "name": "start_date",
+                        "description": "Filter by start date (RFC3339)",
+                        "name": "from_date",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Last seen date (ISO 8601)",
-                        "name": "end_date",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limit (default 100)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset (default 0)",
-                        "name": "offset",
+                        "description": "Filter by end date (RFC3339)",
+                        "name": "to_date",
                         "in": "query"
                     }
                 ],
@@ -76,208 +61,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Device"
-                            }
+                            "$ref": "#/definitions/dtos.GetAnalyticsResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/analytics/events": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get events",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "analytics"
-                ],
-                "summary": "Get events",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Event type",
-                        "name": "event_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Event name",
-                        "name": "event_name",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Start date (ISO 8601)",
-                        "name": "start_date",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "End date (ISO 8601)",
-                        "name": "end_date",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Device ID",
-                        "name": "device_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Platform",
-                        "name": "platform",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limit (default 100)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset (default 0)",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Event"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/analytics/metrics": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get analytics metrics",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "analytics"
-                ],
-                "summary": "Get metrics",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Metric type",
-                        "name": "metric_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Start date (ISO 8601)",
-                        "name": "start_date",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "End date (ISO 8601)",
-                        "name": "end_date",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Period (hourly, daily, weekly, monthly, yearly, total)",
-                        "name": "period",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Dimensions to group by",
-                        "name": "dimensions",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Metric"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
@@ -285,7 +81,7 @@
         },
         "/auth/login": {
             "post": {
-                "description": "Authenticate user and receive JWT token",
+                "description": "Authenticate user with email and password",
                 "consumes": [
                     "application/json"
                 ],
@@ -295,15 +91,15 @@
                 "tags": [
                     "auth"
                 ],
-                "summary": "Login user",
+                "summary": "User login",
                 "parameters": [
                     {
                         "description": "Login credentials",
-                        "name": "credentials",
+                        "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.LoginRequest"
+                            "$ref": "#/definitions/dtos.LoginRequest"
                         }
                     }
                 ],
@@ -311,25 +107,25 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controllers.LoginResponse"
+                            "$ref": "#/definitions/dtos.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
@@ -342,34 +138,25 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Invalidate current JWT token",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Invalidate the current auth token",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "auth"
                 ],
-                "summary": "Logout user",
+                "summary": "User logout",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.LogoutResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
@@ -382,39 +169,99 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get current authenticated user information",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Returns information about the currently authenticated user",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "auth"
                 ],
-                "summary": "Get current user",
+                "summary": "Get current user info",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.User"
+                            "$ref": "#/definitions/dtos.MeResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/auth/register": {
+        "/devices": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a list of all devices with pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Get all devices",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by platform",
+                        "name": "platform",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit results (default 20, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset results (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.GetDevicesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
-                "description": "Register a new user account",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create a new device or update an existing one",
                 "consumes": [
                     "application/json"
                 ],
@@ -422,17 +269,273 @@
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "devices"
                 ],
-                "summary": "Register new user",
+                "summary": "Create or update device",
                 "parameters": [
                     {
-                        "description": "Registration details",
-                        "name": "credentials",
+                        "description": "Device details",
+                        "name": "device",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.RegisterRequest"
+                            "$ref": "#/definitions/dtos.CreateOrUpdateDeviceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.CreateOrUpdateDeviceResponse"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.CreateOrUpdateDeviceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/devices/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a specific device by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Get a device by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.GetDeviceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a device by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Delete a device",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.DeleteDeviceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve events with filtering and pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Get events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by project ID",
+                        "name": "project_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by event type",
+                        "name": "event_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by event name",
+                        "name": "event_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by start date (RFC3339)",
+                        "name": "from_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by end date (RFC3339)",
+                        "name": "to_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset results",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.GetEventsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Record a new telemetry event from a device",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Record a single event",
+                "parameters": [
+                    {
+                        "description": "Event details",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.RecordEventRequest"
                         }
                     }
                 ],
@@ -440,25 +543,185 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.User"
+                            "$ref": "#/definitions/dtos.RecordEventResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
-                    "409": {
-                        "description": "Conflict",
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/batch": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Record a batch of telemetry events from a device",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Record multiple events",
+                "parameters": [
+                    {
+                        "description": "Batch of events",
+                        "name": "events",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.RecordEventsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.RecordEventsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a specific event by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Get event by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.GetEventResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Check if the API is running",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health check endpoint",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health/apikey": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Check if the API is running and verify API key",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health check endpoint with API key authentication",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.HealthResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
@@ -471,45 +734,37 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get all projects accessible by the current user",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Retrieve a list of all projects",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "projects"
                 ],
-                "summary": "List projects",
+                "summary": "Get all projects",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Project"
-                            }
+                            "$ref": "#/definitions/dtos.GetProjectsResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
             },
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Create a new project",
+                "description": "Create a new telemetry project",
                 "consumes": [
                     "application/json"
                 ],
@@ -519,7 +774,7 @@
                 "tags": [
                     "projects"
                 ],
-                "summary": "Create project",
+                "summary": "Create new project",
                 "parameters": [
                     {
                         "description": "Project details",
@@ -527,7 +782,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.CreateProjectRequest"
+                            "$ref": "#/definitions/dtos.CreateProjectRequest"
                         }
                     }
                 ],
@@ -535,25 +790,62 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.Project"
+                            "$ref": "#/definitions/dtos.CreateProjectResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/apikey": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get project details using an API key for authentication",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Get project with API key",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.GetProjectResponseDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
@@ -566,17 +858,14 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get a specific project by ID",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Retrieve a specific project by its ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "projects"
                 ],
-                "summary": "Get project",
+                "summary": "Get a project by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -590,30 +879,86 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Project"
+                            "$ref": "#/definitions/dtos.GetProjectResponseDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
             },
-            "put": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a project by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Delete a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.DeleteProjectResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -629,7 +974,7 @@
                 "tags": [
                     "projects"
                 ],
-                "summary": "Update project",
+                "summary": "Update a project",
                 "parameters": [
                     {
                         "type": "string",
@@ -639,12 +984,12 @@
                         "required": true
                     },
                     {
-                        "description": "Project details",
+                        "description": "Updated project details",
                         "name": "project",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.CreateProjectRequest"
+                            "$ref": "#/definitions/dtos.UpdateProjectRequest"
                         }
                     }
                 ],
@@ -652,207 +997,44 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Project"
+                            "$ref": "#/definitions/dtos.UpdateProjectResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Delete a project",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "projects"
-                ],
-                "summary": "Delete project",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Project ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
             }
         },
         "/projects/{id}/apikey": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get the API key for a project",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "projects"
-                ],
-                "summary": "Get API key",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Project ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Regenerate the API key for a project",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Generate a new API key for a project",
                 "produces": [
                     "application/json"
                 ],
@@ -873,59 +1055,119 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.GetProjectResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/sdk/installation": {
+        "/sessions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all sessions with filtering and pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "Get sessions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by project ID",
+                        "name": "project_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by start date (RFC3339)",
+                        "name": "from_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by end date (RFC3339)",
+                        "name": "to_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset results",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.GetSessionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/begin": {
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Record a new installation event",
+                "description": "Start a new game session for a device",
                 "consumes": [
                     "application/json"
                 ],
@@ -933,17 +1175,80 @@
                     "application/json"
                 ],
                 "tags": [
-                    "sdk"
+                    "sessions"
                 ],
-                "summary": "Record installation",
+                "summary": "Begin a new session",
                 "parameters": [
                     {
-                        "description": "Installation data",
-                        "name": "installation",
+                        "description": "Session details",
+                        "name": "session",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.InstallationRequest"
+                            "$ref": "#/definitions/dtos.BeginSessionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.BeginSessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/end": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "End an existing game session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "End a session",
+                "parameters": [
+                    {
+                        "description": "Session to end",
+                        "name": "session",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.EndSessionRequest"
                         }
                     }
                 ],
@@ -951,41 +1256,120 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.EndSessionResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/telemetry/events": {
-            "post": {
+        "/sessions/{id}": {
+            "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Record a telemetry event",
+                "description": "Retrieve a specific session by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "Get session by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.GetSessionResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a list of all users",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get all users",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.GetUsersResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Register a new user account",
                 "consumes": [
                     "application/json"
                 ],
@@ -993,17 +1377,17 @@
                     "application/json"
                 ],
                 "tags": [
-                    "telemetry"
+                    "users"
                 ],
-                "summary": "Record event",
+                "summary": "Create a new user",
                 "parameters": [
                     {
-                        "description": "Event details",
-                        "name": "event",
+                        "description": "User details",
+                        "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.EventRequest"
+                            "$ref": "#/definitions/dtos.CreateUserRequest"
                         }
                     }
                 ],
@@ -1011,41 +1395,114 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.CreateUserResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/telemetry/events/batch": {
-            "post": {
+        "/users/{id}": {
+            "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Record multiple telemetry events in a batch",
+                "description": "Retrieve detailed information about the current user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user by ID",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.GetUserResponseDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete the current user account",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Delete user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.DeleteUserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update the current user's information",
                 "consumes": [
                     "application/json"
                 ],
@@ -1053,226 +1510,49 @@
                     "application/json"
                 ],
                 "tags": [
-                    "telemetry"
+                    "users"
                 ],
-                "summary": "Record events batch",
+                "summary": "Update user",
                 "parameters": [
                     {
-                        "description": "Events batch",
-                        "name": "events",
+                        "description": "Updated user details",
+                        "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.EventsRequest"
+                            "$ref": "#/definitions/dtos.UpdateUserRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.UpdateUserResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/telemetry/install": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Record an installation event",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "telemetry"
-                ],
-                "summary": "Record install",
-                "parameters": [
-                    {
-                        "description": "Install details",
-                        "name": "install",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controllers.EventRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/telemetry/session/end": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "End a session for a device",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "telemetry"
-                ],
-                "summary": "End session",
-                "parameters": [
-                    {
-                        "description": "Session end details",
-                        "name": "session",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controllers.EventRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/telemetry/session/start": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Start a new session for a device",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "telemetry"
-                ],
-                "summary": "Start session",
-                "parameters": [
-                    {
-                        "description": "Session start details",
-                        "name": "session",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controllers.EventRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dtos.ErrorResponse"
                         }
                     }
                 }
@@ -1280,7 +1560,81 @@
         }
     },
     "definitions": {
-        "controllers.CreateProjectRequest": {
+        "dtos.BeginSessionRequest": {
+            "type": "object",
+            "required": [
+                "identifier"
+            ],
+            "properties": {
+                "identifier": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.BeginSessionResponse": {
+            "type": "object",
+            "properties": {
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.CreateOrUpdateDeviceRequest": {
+            "type": "object",
+            "required": [
+                "app_version",
+                "identifier",
+                "platform",
+                "platform_version"
+            ],
+            "properties": {
+                "app_version": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "platform_version": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.CreateOrUpdateDeviceResponse": {
+            "type": "object",
+            "properties": {
+                "app_version": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "device_id": {
+                    "type": "string"
+                },
+                "first_seen": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "ip_address": {
+                    "type": "string"
+                },
+                "last_seen": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "platform_version": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.CreateProjectRequest": {
             "type": "object",
             "required": [
                 "name"
@@ -1291,129 +1645,24 @@
                 }
             }
         },
-        "controllers.EventRequest": {
+        "dtos.CreateProjectResponse": {
             "type": "object",
-            "required": [
-                "app_version",
-                "device_id",
-                "event_name",
-                "event_type",
-                "os_version",
-                "platform"
-            ],
             "properties": {
-                "app_version": {
+                "api_key": {
                     "type": "string"
                 },
-                "device_id": {
+                "name": {
                     "type": "string"
                 },
-                "event_name": {
-                    "type": "string"
+                "owner": {
+                    "$ref": "#/definitions/dtos.OwnerDto"
                 },
-                "event_type": {
-                    "type": "string"
-                },
-                "os_version": {
-                    "type": "string"
-                },
-                "parameters": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "platform": {
-                    "type": "string"
-                },
-                "timestamp": {
+                "project_id": {
                     "type": "string"
                 }
             }
         },
-        "controllers.EventsRequest": {
-            "type": "object",
-            "required": [
-                "events"
-            ],
-            "properties": {
-                "events": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controllers.EventRequest"
-                    }
-                }
-            }
-        },
-        "controllers.InstallationRequest": {
-            "type": "object",
-            "required": [
-                "app_version",
-                "device_id",
-                "os_version",
-                "platform"
-            ],
-            "properties": {
-                "app_version": {
-                    "type": "string"
-                },
-                "device_id": {
-                    "type": "string"
-                },
-                "os_version": {
-                    "type": "string"
-                },
-                "platform": {
-                    "type": "string"
-                },
-                "properties": {
-                    "type": "object",
-                    "additionalProperties": {}
-                }
-            }
-        },
-        "controllers.LoginRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.LoginResponse": {
-            "type": "object",
-            "properties": {
-                "expires_at": {
-                    "type": "string"
-                },
-                "token": {
-                    "type": "string"
-                },
-                "user": {
-                    "type": "object",
-                    "properties": {
-                        "email": {
-                            "type": "string"
-                        },
-                        "id": {
-                            "type": "string"
-                        },
-                        "name": {
-                            "type": "string"
-                        },
-                        "role": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "controllers.RegisterRequest": {
+        "dtos.CreateUserRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -1433,11 +1682,514 @@
                 }
             }
         },
+        "dtos.CreateUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.DeleteDeviceResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.DeleteProjectResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.DeleteUserResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.EndSessionRequest": {
+            "type": "object",
+            "required": [
+                "session_id"
+            ],
+            "properties": {
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.EndSessionResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.GetAnalyticsResponse": {
+            "type": "object",
+            "required": [
+                "dau",
+                "mau",
+                "total_duration",
+                "total_installs"
+            ],
+            "properties": {
+                "dau": {
+                    "type": "integer"
+                },
+                "mau": {
+                    "type": "integer"
+                },
+                "total_duration": {
+                    "type": "integer"
+                },
+                "total_installs": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dtos.GetDeviceResponse": {
+            "type": "object",
+            "properties": {
+                "app_version": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "device_id": {
+                    "type": "string"
+                },
+                "first_seen": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "ip_address": {
+                    "type": "string"
+                },
+                "last_seen": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "platform_version": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.GetDevicesResponse": {
+            "type": "object",
+            "properties": {
+                "devices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.GetDeviceResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dtos.GetEventResponse": {
+            "type": "object",
+            "properties": {
+                "event_id": {
+                    "type": "string"
+                },
+                "event_name": {
+                    "type": "string"
+                },
+                "event_type": {
+                    "type": "string"
+                },
+                "payloads": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "received_at": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.GetEventsResponse": {
+            "type": "object",
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.GetEventResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dtos.GetProjectResponse": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "$ref": "#/definitions/dtos.OwnerDto"
+                },
+                "project_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.GetProjectResponseDetail": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "devices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Device"
+                    }
+                },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Event"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "$ref": "#/definitions/dtos.OwnerDto"
+                },
+                "project_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.GetProjectsResponse": {
+            "type": "object",
+            "properties": {
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.GetProjectResponse"
+                    }
+                }
+            }
+        },
+        "dtos.GetSessionResponse": {
+            "type": "object",
+            "properties": {
+                "begin_at": {
+                    "type": "string"
+                },
+                "duration": {
+                    "description": "Duration in nanoseconds",
+                    "type": "integer"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.GetSessionsResponse": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.GetSessionResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dtos.GetUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.GetUserResponseDetail": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Project"
+                    }
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.GetUsersResponse": {
+            "type": "object",
+            "properties": {
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.GetUserResponse"
+                    }
+                }
+            }
+        },
+        "dtos.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.LogoutResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.MeResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.OwnerDto": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.RecordEventRequest": {
+            "type": "object",
+            "required": [
+                "event_name",
+                "event_type",
+                "identifier"
+            ],
+            "properties": {
+                "event_name": {
+                    "type": "string"
+                },
+                "event_type": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "payloads": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.RecordEventResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.RecordEventsRequest": {
+            "type": "object",
+            "required": [
+                "events"
+            ],
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.RecordEventRequest"
+                    }
+                }
+            }
+        },
+        "dtos.RecordEventsResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.UpdateProjectRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.UpdateProjectResponse": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "$ref": "#/definitions/dtos.OwnerDto"
+                },
+                "project_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.UpdateUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Device": {
             "type": "object",
             "properties": {
                 "app_version": {
-                    "description": "Game version",
+                    "description": "App version",
                     "type": "string"
                 },
                 "country": {
@@ -1445,10 +2197,6 @@
                     "type": "string"
                 },
                 "created_at": {
-                    "type": "string"
-                },
-                "device_id": {
-                    "description": "Client-generated device identifier",
                     "type": "string"
                 },
                 "events": {
@@ -1464,6 +2212,10 @@
                 "id": {
                     "type": "string"
                 },
+                "identifier": {
+                    "description": "Client-generated device identifier",
+                    "type": "string"
+                },
                 "ip_address": {
                     "description": "Hashed/anonymized IP address",
                     "type": "string"
@@ -1472,12 +2224,12 @@
                     "description": "Last session timestamp",
                     "type": "string"
                 },
-                "os_version": {
-                    "description": "e.g., \"10.0\", \"Android 11\"",
-                    "type": "string"
-                },
                 "platform": {
                     "description": "iOS, Android, Windows, etc.",
+                    "type": "string"
+                },
+                "platform_version": {
+                    "description": "e.g., \"10.0\", \"Android 11\"",
                     "type": "string"
                 },
                 "project_id": {
@@ -1486,12 +2238,6 @@
                 "updated_at": {
                     "type": "string"
                 }
-            }
-        },
-        "models.Dimensions": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "string"
             }
         },
         "models.Event": {
@@ -1508,16 +2254,16 @@
                     "type": "string"
                 },
                 "event_type": {
-                    "$ref": "#/definitions/models.EventType"
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "parameters": {
-                    "description": "JSON parameters",
+                "payloads": {
+                    "description": "JSON payloads",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/models.Parameters"
+                            "$ref": "#/definitions/models.Payloads"
                         }
                     ]
                 },
@@ -1537,104 +2283,14 @@
                 }
             }
         },
-        "models.EventType": {
-            "type": "string",
-            "enum": [
-                "session_start",
-                "session_end",
-                "install",
-                "uninstall",
-                "custom"
-            ],
-            "x-enum-varnames": [
-                "SessionStart",
-                "SessionEnd",
-                "Install",
-                "Uninstall",
-                "Custom"
-            ]
-        },
-        "models.Metric": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "dimensions": {
-                    "$ref": "#/definitions/models.Dimensions"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "metric_type": {
-                    "$ref": "#/definitions/models.MetricType"
-                },
-                "period": {
-                    "$ref": "#/definitions/models.PeriodType"
-                },
-                "period_start": {
-                    "type": "string"
-                },
-                "project_id": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "number"
-                }
-            }
-        },
-        "models.MetricType": {
-            "type": "string",
-            "enum": [
-                "dau",
-                "mau",
-                "new_users",
-                "session_count",
-                "session_length",
-                "event_count",
-                "retention_rate"
-            ],
-            "x-enum-varnames": [
-                "DailyActiveUsers",
-                "MonthlyActiveUsers",
-                "NewUsers",
-                "SessionCount",
-                "SessionLength",
-                "EventCount",
-                "RetentionRate"
-            ]
-        },
-        "models.Parameters": {
+        "models.Payloads": {
             "type": "object",
             "additionalProperties": true
-        },
-        "models.PeriodType": {
-            "type": "string",
-            "enum": [
-                "hourly",
-                "daily",
-                "weekly",
-                "monthly",
-                "yearly",
-                "total"
-            ],
-            "x-enum-varnames": [
-                "Hourly",
-                "Daily",
-                "Weekly",
-                "Monthly",
-                "Yearly",
-                "Total"
-            ]
         },
         "models.Project": {
             "type": "object",
             "properties": {
                 "api_key": {
-                    "description": "Not always exposed in responses",
                     "type": "string"
                 },
                 "created_at": {
@@ -1658,17 +2314,14 @@
                 "name": {
                     "type": "string"
                 },
+                "owner": {
+                    "$ref": "#/definitions/models.User"
+                },
                 "owner_id": {
                     "type": "string"
                 },
                 "updated_at": {
                     "type": "string"
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.User"
-                    }
                 }
             }
         },
@@ -1692,10 +2345,6 @@
                     "items": {
                         "$ref": "#/definitions/models.Project"
                     }
-                },
-                "role": {
-                    "description": "'admin' or 'developer'",
-                    "type": "string"
                 },
                 "updated_at": {
                     "type": "string"

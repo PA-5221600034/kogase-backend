@@ -18,6 +18,18 @@ func NewProjectController(db *gorm.DB) *ProjectController {
 	return &ProjectController{DB: db}
 }
 
+// CreateProject godoc
+// @Summary Create new project
+// @Description Create a new telemetry project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param project body dtos.CreateProjectRequest true "Project details"
+// @Success 201 {object} dtos.CreateProjectResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /projects [post]
 func (pc *ProjectController) CreateProject(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -70,6 +82,16 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 	c.JSON(http.StatusCreated, resultResponse)
 }
 
+// GetProjects godoc
+// @Summary Get all projects
+// @Description Retrieve a list of all projects
+// @Tags projects
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dtos.GetProjectsResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /projects [get]
 func (pc *ProjectController) GetProjects(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -109,6 +131,18 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// GetProject godoc
+// @Summary Get a project by ID
+// @Description Retrieve a specific project by its ID
+// @Tags projects
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Project ID"
+// @Success 200 {object} dtos.GetProjectResponseDetail
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Router /projects/{id} [get]
 func (pc *ProjectController) GetProject(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -158,6 +192,21 @@ func (pc *ProjectController) GetProject(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// UpdateProject godoc
+// @Summary Update a project
+// @Description Update a project's details
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Project ID"
+// @Param project body dtos.UpdateProjectRequest true "Updated project details"
+// @Success 200 {object} dtos.UpdateProjectResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /projects/{id} [patch]
 func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -224,6 +273,19 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// DeleteProject godoc
+// @Summary Delete a project
+// @Description Delete a project by its ID
+// @Tags projects
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Project ID"
+// @Success 200 {object} dtos.DeleteProjectResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /projects/{id} [delete]
 func (pc *ProjectController) DeleteProject(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -270,6 +332,19 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// RegenerateApiKey godoc
+// @Summary Regenerate API key
+// @Description Generate a new API key for a project
+// @Tags projects
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Project ID"
+// @Success 200 {object} dtos.GetProjectResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /projects/{id}/apikey [post]
 func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
 	_, exists := c.Get("user_id")
 	if !exists {
@@ -325,6 +400,16 @@ func (pc *ProjectController) RegenerateApiKey(c *gin.Context) {
 	c.JSON(http.StatusOK, resultResponse)
 }
 
+// GetProjectWithApiKey godoc
+// @Summary Get project with API key
+// @Description Get project details using an API key for authentication
+// @Tags projects
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} dtos.GetProjectResponseDetail
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Router /projects/apikey [get]
 func (pc *ProjectController) GetProjectWithApiKey(c *gin.Context) {
 	projectID, exists := c.Get("project_id")
 	if !exists {

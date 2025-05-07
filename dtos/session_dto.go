@@ -40,8 +40,8 @@ type GetSessionRequest struct {
 }
 
 type GetSessionResponse struct {
-	SessionID string        `json:"session_id"`
-	BeginAt   time.Time     `json:"begin_at"`
-	EndAt     time.Time     `json:"end_at"`
-	Duration  time.Duration `json:"duration"`
+	SessionID string    `json:"session_id"`
+	BeginAt   time.Time `json:"begin_at"`
+	EndAt     time.Time `json:"end_at"`
+	Duration  int64     `json:"duration"` // Duration in nanoseconds
 }

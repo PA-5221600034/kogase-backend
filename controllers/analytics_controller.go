@@ -18,6 +18,19 @@ func NewAnalyticsController(db *gorm.DB) *AnalyticsController {
 	return &AnalyticsController{DB: db}
 }
 
+// GetAnalytics godoc
+// @Summary Get analytics data
+// @Description Retrieve analytics data for a project including DAU, MAU, total duration, and total installs
+// @Tags analytics
+// @Produce json
+// @Security BearerAuth
+// @Param project_id query string false "Filter by project ID"
+// @Param from_date query string false "Filter by start date (RFC3339)"
+// @Param to_date query string false "Filter by end date (RFC3339)"
+// @Success 200 {object} dtos.GetAnalyticsResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Router /analytics [get]
 func (ac *AnalyticsController) GetAnalytics(c *gin.Context) {
 	_, exist := c.Get("user_id")
 	if !exist {
@@ -71,7 +84,7 @@ func (ac *AnalyticsController) GetAnalytics(c *gin.Context) {
 			}
 		}
 		for _, session := range sessions {
-			response.TotalDuration += session.Duration
+			response.TotalDuration += session.Duration.Nanoseconds()
 		}
 	}
 

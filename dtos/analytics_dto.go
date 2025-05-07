@@ -11,8 +11,8 @@ type GetAnalyticsRequestQuery struct {
 }
 
 type GetAnalyticsResponse struct {
-	DAU           int           `json:"dau" binding:"required"`
-	MAU           int           `json:"mau" binding:"required"`
-	TotalDuration time.Duration `json:"total_duration" binding:"required"`
-	TotalInstalls int           `json:"total_installs" binding:"required"`
+	DAU           int   `json:"dau" binding:"required"`
+	MAU           int   `json:"mau" binding:"required"`
+	TotalDuration int64 `json:"total_duration" binding:"required"`
+	TotalInstalls int   `json:"total_installs" binding:"required"`
 }
