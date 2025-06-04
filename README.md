@@ -23,7 +23,7 @@ The Kogase Backend is a Go-based API for game analytics and telemetry data colle
 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/kogase.git
+git clone https://github.com/PA-5221600034/kogase.git
 cd kogase/backend
 ```
 
